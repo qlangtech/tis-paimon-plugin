@@ -1,0 +1,6 @@
+{
+  "catalogPath": {
+    "help": "paimon创建的catalog路径，可以包含文件系统的和hdfs系统的路径",
+    "placeholder": "example:'/app/hive/warehouse'"
+  }
+}

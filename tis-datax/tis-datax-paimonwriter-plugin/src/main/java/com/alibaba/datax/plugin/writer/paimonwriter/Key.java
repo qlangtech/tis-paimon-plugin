@@ -4,6 +4,9 @@ public class Key {
 
     public static final String PAIMON_DB_NAME = "databaseName";
     public static final String PAIMON_TABLE_NAME = "tableName";
+
+    public static final String SOURCE_TABLE_NAME = "sourceTableName";
+
     public static final String PAIMON_PRIMARY_KEY = "primaryKey";
     public static final String PAIMON_PARTITION_FIELDS = "partitionFields";
     public static final String PAIMON_BATCH_SIZE = "batchSize";

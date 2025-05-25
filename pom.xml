@@ -14,10 +14,17 @@
     <artifactId>tis-paimon-plugin</artifactId>
     <version>${revision}</version>
 
+    <scm>
+        <connection>scm:git:git://github.com/qlangtech/tis-paimon-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/qlangtech/tis-paimon-plugin.git</developerConnection>
+        <url>https://github.com/qlangtech/tis-paimon-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <packaging>pom</packaging>
     <modules>
         <module>tis-datax</module>
-<!--        <module>tis-incr</module>-->
+        <module>tis-incr</module>
     </modules>
 
     <properties>

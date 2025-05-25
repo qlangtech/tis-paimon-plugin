@@ -8,5 +8,9 @@
     <file url="file://$PROJECT_DIR$/tis-datax/tis-datax-/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tis-datax/tis-datax-paimonwriter-plugin/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tis-datax/tis-datax-paimonwriter-plugin/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tis-incr/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tis-incr/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tis-incr/tis-flink-pipeline-paimon-plugin/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tis-incr/tis-flink-pipeline-paimon-plugin/src/main/resources" charset="UTF-8" />
   </component>
 </project>

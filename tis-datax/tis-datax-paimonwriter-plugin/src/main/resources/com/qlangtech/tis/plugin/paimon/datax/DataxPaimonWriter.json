@@ -1,0 +1,18 @@
+{
+  "template": {
+    "dftVal": "com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.getDftTemplate()"
+  },
+  "writeMode": {
+    "disable": true
+  },
+  "paimonWriteMode": {
+    "label": "writeMode",
+    "dftVal": "Batch"
+  },
+  "catalog": {
+    "dftVal": "HiveMetaStore"
+  },
+  "fileType": {
+    "disable": true
+  }
+}

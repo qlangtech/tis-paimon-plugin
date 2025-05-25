@@ -1,0 +1,56 @@
+{
+  "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog": {
+    "attrs": [
+      {
+        "describable": false,
+        "eprops": {
+          "creator": {
+            "assistType": "dbQuickManager",
+            "label": "配置",
+            "plugin": [
+              {
+                "descName": "Hiveserver2",
+                "extraParam": "type_detailed,update_false,disableBizStore_true",
+                "hetero": "datasource"
+              }
+            ]
+          },
+          "label": "hiveserver2"
+        },
+        "key": "dbName",
+        "ord": 0,
+        "pk": false,
+        "required": true,
+        "type": 5
+      },
+      {
+        "describable": false,
+        "eprops": {
+          "help": "paimon创建的catalog路径，可以包含文件系统的和hdfs系统的路径",
+          "placeholder": "example:'/app/hive/warehouse'"
+        },
+        "key": "catalogPath",
+        "ord": 0,
+        "pk": false,
+        "required": true,
+        "type": 1
+      },
+      {
+        "describable": false,
+        "key": "tableOwner",
+        "ord": 1,
+        "pk": false,
+        "required": true,
+        "type": 1
+      }
+    ],
+    "containAdvance": false,
+    "displayName": "HiveMetaStore",
+    "extendPoint": "com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog",
+    "extractProps": {
+    },
+    "impl": "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog",
+    "implUrl": "http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloghivecatalog",
+    "veriflable": false
+  }
+}

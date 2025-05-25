@@ -1,0 +1,17 @@
+{
+  "dbName": {
+    "label": "hiveserver2",
+    "enum": "com.qlangtech.tis.util.PluginItems.getExistDbs(\"Hiveserver2\")",
+    "creator": {
+      "label": "配置",
+      "assistType": "dbQuickManager",
+      "plugin": [
+        {
+          "hetero": "datasource",
+          "descName": "Hiveserver2",
+          "extraParam": "type_detailed,update_false,disableBizStore_true"
+        }
+      ]
+    }
+  }
+}

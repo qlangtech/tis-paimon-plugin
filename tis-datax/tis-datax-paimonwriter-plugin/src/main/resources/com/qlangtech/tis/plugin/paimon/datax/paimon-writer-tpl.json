@@ -1,0 +1,15 @@
+{
+  "name": "paimonwriter",
+  "parameter": {
+  "tableName": "$writer.tableName",
+  "sourceTableName": "$writer.sourceTableName",
+  "databaseName": "paimon",
+  "column": [
+    #foreach($col in $writer.paimonCols  )
+    {
+      "name": "$col.name",
+      "type": "$col.type"
+    } #if($foreach.hasNext),#end
+    #end
+  ]}
+}

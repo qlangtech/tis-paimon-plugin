@@ -1,0 +1,7 @@
+{
+  "timeZone": {
+    "label": "所在时区",
+    "dftVal": "com.qlangtech.tis.async.message.client.consumer.impl.MQListenerFactory.dftZoneId()",
+    "enum": "com.qlangtech.tis.async.message.client.consumer.impl.MQListenerFactory.availableZoneIds()"
+  }
+}
