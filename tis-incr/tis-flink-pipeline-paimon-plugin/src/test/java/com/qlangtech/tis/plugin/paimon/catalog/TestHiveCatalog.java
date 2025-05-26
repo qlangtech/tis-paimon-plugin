@@ -4,7 +4,6 @@ import com.qlangtech.tis.config.hive.IHiveConnGetter;
 import com.qlangtech.tis.config.hive.meta.HiveTable;
 import com.qlangtech.tis.config.hive.meta.IHiveMetaStore;
 import com.qlangtech.tis.offline.FileSystemFactory;
-import com.qlangtech.tis.plugin.common.PluginDesc;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import org.apache.paimon.catalog.Catalog;
 import org.junit.Assert;
@@ -16,26 +15,24 @@ import java.util.List;
 
 /**
  * @author: 百岁（baisui@qlangtech.com）
- * @create: 2025-05-18 14:46
+ * @create: 2025-05-26 14:19
  **/
 public class TestHiveCatalog {
 
     @Test
-    public void testDescGenerate() {
-        PluginDesc.testDescGenerate(HiveCatalog.class, "paimon-hive-catalog-descriptor.json");
+    public void testUrl() throws Exception {
+
+        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/hive/metastore/HiveMetaStoreClient.class");
+        while (resources.hasMoreElements()) {
+            System.out.println(resources.nextElement());
+        }
     }
 
-//    @Test
-//    public void testUrl() throws Exception {
-//
-//        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/hive/metastore/HiveMetaStoreClient.class");
-//        while (resources.hasMoreElements()) {
-//            System.out.println(resources.nextElement());
-//        }
-//    }
 
     @Test
     public void testCreateCatalog() throws Exception {
+
+
         HiveCatalog hiveCatalog = PaimonTestUtils.createHiveCatalog();
         FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
         Assert.assertNotNull(hiveCatalog);
@@ -44,8 +41,8 @@ public class TestHiveCatalog {
 
         //  catalog.createDatabase("paimon", true);
 
-       // Database paimonDB = catalog.getDatabase("paimon");
-       // Assert.assertNotNull(paimonDB);
+        // Database paimonDB = catalog.getDatabase("paimon");
+        // Assert.assertNotNull(paimonDB);
         List<String> dbs = catalog.listDatabases();
         Assert.assertNotNull(dbs);
 
@@ -53,7 +50,7 @@ public class TestHiveCatalog {
         hiveCatalog.getDataSourceFactory().visitAllConnection((conn) -> {
             try {
 
-              //  conn.execute("create database paimon");
+                //  conn.execute("create database paimon");
                 conn.query("SELECT * FROM paimon.customer_order_relation", (result) -> {
                     System.out.println(result.getString(1));
                     return true;
@@ -69,5 +66,4 @@ public class TestHiveCatalog {
         List<HiveTable> tabs = metaStoreClient.getTables("default");
         Assert.assertNotNull(tabs);
     }
-
 }

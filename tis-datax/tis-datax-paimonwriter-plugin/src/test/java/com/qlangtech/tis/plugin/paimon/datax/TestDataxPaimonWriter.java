@@ -20,6 +20,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Optional;
 
 /**
@@ -28,9 +30,15 @@ import java.util.Optional;
  **/
 public class TestDataxPaimonWriter {
     @Test
-    public void testDescGenerate() {
+    public void testDescGenerate() throws Exception {
+//        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/ipc/protobuf/RpcHeaderProtos.class");
+//        while (resources.hasMoreElements()) {
+//            System.out.println(resources.nextElement());
+//        }
         PluginDesc.testDescGenerate(DataxPaimonWriter.class, "paimon-datax-writer-descriptor.json");
     }
+
+
 
     @Test
     public void testTemplateGenerate() throws Exception {

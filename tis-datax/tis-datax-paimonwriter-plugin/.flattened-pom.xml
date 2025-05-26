@@ -21,11 +21,9 @@
   </licenses>
   <properties>
     <thrift.version>0.12.0</thrift.version>
-    <hive.version>2.3.1</hive.version>
     <classifier>hive_${hive.version};hadoop_${hadoop-version}</classifier>
-    <paimon.version>0.8-SNAPSHOT</paimon.version>
+    <paimon.version>1.0.1</paimon.version>
     <fb303.version>0.9.3</fb303.version>
-    <hadoop.version>3.3.4</hadoop.version>
   </properties>
   <dependencies>
     <dependency>
@@ -62,25 +60,37 @@
     <dependency>
       <groupId>org.apache.paimon</groupId>
       <artifactId>paimon-bundle</artifactId>
-      <version>1.0.1</version>
+      <version>${paimon.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-jdbc</artifactId>
+      <version>${hive.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libfb303</artifactId>
+      <version>${fb303.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>16.0.1</version>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>${thrift.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
-      <version>3.3.4</version>
+      <version>${hadoop-version}</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -93,11 +103,6 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>30.1.1-jre</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <version>9.4.15.v20190215</version>
     </dependency>
     <dependency>
       <groupId>com.alibaba.datax</groupId>

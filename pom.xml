@@ -28,6 +28,7 @@
     </modules>
 
     <properties>
+<!--        <flink.cdc.version>3.4.0</flink.cdc.version>-->
     </properties>
 
 </project>

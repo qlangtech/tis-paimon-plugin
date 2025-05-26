@@ -13,7 +13,7 @@
     <artifactId>tis-paimon-incr</artifactId>
     <packaging>pom</packaging>
     <properties>
-
+        <classifier>hive_${hive.version};hadoop_${hadoop-version}</classifier>
     </properties>
 
     <modules>

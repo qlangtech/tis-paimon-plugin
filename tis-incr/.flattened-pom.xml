@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.qlangtech.tis.plugins</groupId>
+    <artifactId>tis-paimon-plugin</artifactId>
+    <version>4.3.0-SNAPSHOT</version>
+  </parent>
+  <groupId>com.qlangtech.tis.plugins</groupId>
+  <artifactId>tis-paimon-incr</artifactId>
+  <version>4.3.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <licenses>
+    <license>
+      <name>GNU Affero General Public License</name>
+      <url>https://www.gnu.org/licenses/agpl-3.0.en.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <modules>
+    <module>tis-flink-pipeline-paimon-plugin</module>
+  </modules>
+  <properties>
+    <classifier>hive_${hive.version};hadoop_${hadoop-version}</classifier>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.qlangtech.tis.plugins</groupId>
+        <artifactId>tis-realtime-flink</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-cdc-common</artifactId>
+        <version>${flink.cdc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-cdc-runtime</artifactId>
+        <version>${flink.cdc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-cdc-composer</artifactId>
+        <version>${flink.cdc.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

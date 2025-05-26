@@ -1,11 +1,13 @@
 package com.qlangtech.tis.plugins.incr.flink.connector;
 
 
+import com.google.common.collect.Maps;
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol.DTOConvertTo;
 import com.qlangtech.tis.plugins.incr.flink.cdc.BasicFlinkDataMapper;
 import com.qlangtech.tis.realtime.transfer.DTO;
 import com.qlangtech.tis.realtime.transfer.DTO.EventType;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.cdc.common.data.RecordData;
 import org.apache.flink.cdc.common.event.DataChangeEvent;
@@ -24,29 +26,55 @@ import java.util.stream.Collectors;
  * @see com.qlangtech.tis.plugins.incr.flink.cdc.DTO2RowDataMapper
  **/
 public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChangeEvent, Event> {
-    private final Map<String, BinaryRecordDataGenerator> tab2GenMapper;
+    private transient Map<String, BinaryRecordDataGenerator> tab2GenMapper;
     private final Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper;
 
     public DTO2FlinkPipelineEventMapper(Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper) {
         super(DTOConvertTo.FlinkCDCPipelineEvent);
 
         this.sourceColsMetaMapper = sourceColsMetaMapper;
-        this.tab2GenMapper
-                = sourceColsMetaMapper.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> {
-            List<FlinkCol> cols = e.getValue();
+//        this.tab2GenMapper
+//                = sourceColsMetaMapper.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> {
+//            List<FlinkCol> cols = e.getValue();
+//            org.apache.flink.cdc.common.types.DataType[] dataTypes = new org.apache.flink.cdc.common.types.DataType[cols.size()];
+//            for (int idx = 0; idx < cols.size(); idx++) {
+//                FlinkCol flinkCol = cols.get(idx);
+//                dataTypes[idx] =
+//                        flinkCol.flinkCDCPipelineEventProcess.getDataType();
+//            }
+//            return new BinaryRecordDataGenerator(dataTypes);
+//        }));
+    }
+
+    @Override
+    protected void fillRowVals(DTO dto, DataChangeEvent row) {
+
+    }
+
+    private BinaryRecordDataGenerator getRecordDataGenerator(TableId tableId) {
+        BinaryRecordDataGenerator recordDataGenerator = null;
+        if (tab2GenMapper == null) {
+            synchronized (this) {
+                if (tab2GenMapper == null) {
+                    tab2GenMapper = Maps.newHashMap();
+                }
+            }
+        }
+        if ((recordDataGenerator = tab2GenMapper.get(tableId.getTableName())) == null) {
+            List<FlinkCol> cols = sourceColsMetaMapper.get(tableId.getTableName());
+            if (CollectionUtils.isEmpty(cols)) {
+                throw new IllegalStateException("tableId:" + tableId + " relevant flinkCols can not be null");
+            }
             org.apache.flink.cdc.common.types.DataType[] dataTypes = new org.apache.flink.cdc.common.types.DataType[cols.size()];
             for (int idx = 0; idx < cols.size(); idx++) {
                 FlinkCol flinkCol = cols.get(idx);
                 dataTypes[idx] =
                         flinkCol.flinkCDCPipelineEventProcess.getDataType();
             }
-            return new BinaryRecordDataGenerator(dataTypes);
-        }));
-    }
-
-    @Override
-    protected void fillRowVals(DTO dto, DataChangeEvent row) {
-
+            recordDataGenerator = new BinaryRecordDataGenerator(dataTypes);
+            tab2GenMapper.put(tableId.getTableName(), recordDataGenerator);
+        }
+        return recordDataGenerator;
     }
 
     @Override

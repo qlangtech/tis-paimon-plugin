@@ -15,9 +15,7 @@ import com.qlangtech.tis.plugin.common.DataXCfgJson;
 import com.qlangtech.tis.plugin.common.WriterTemplate;
 import com.qlangtech.tis.plugin.ds.DataType;
 import com.qlangtech.tis.plugin.ds.JDBCTypes;
-import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
-import com.qlangtech.tis.plugin.paimon.catalog.TestHiveCatalog;
-import com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode;
+import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,16 +33,14 @@ public class TestDataxPaimonWriterRealReal {
 //    @Rule
 //    public TemporaryFolder folder = new TemporaryFolder();
 
-    public static final String KEY_HDFS200 = "hdfs200";
-
     @Test
     public void testRealDump() throws Exception {
 
         final String targetTableName = "customer_order_relation";
         String testDataXName = "mysql_paimon";
 
-        final DataxPaimonWriter writer = getPaimonWriter();
-        writer.fsName = KEY_HDFS200;
+        final DataxPaimonWriter writer = PaimonTestUtils.getPaimonWriter();
+
         writer.tableBucket = 1;
         writer.dataXName = testDataXName;
 
@@ -171,25 +167,6 @@ public class TestDataxPaimonWriterRealReal {
         public String getSourceTableName() {
             return this.sourceTableName;
         }
-    }
-
-    private DataxPaimonWriter getPaimonWriter() {
-        //   DaMengDataSourceFactory dsFactory = TestDaMengDataSourceFactory.createDaMengDataSourceFactory();
-
-        DataxPaimonWriter writer = new DataxPaimonWriter() {
-            @Override
-            public Class<?> getOwnerClass() {
-                return DataxPaimonWriter.class;
-            }
-        };
-        HiveCatalog hiveCatalog = TestHiveCatalog.createHiveCatalog();
-        writer.catalog = hiveCatalog;
-        BatchInsertWriteMode writeMode = new BatchInsertWriteMode();
-       
-        writer.paimonWriteMode = writeMode;
-        //writer.autoCreateTable = AutoCreateTable.dft();
-
-        return writer;
     }
 
 }

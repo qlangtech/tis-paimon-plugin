@@ -14,8 +14,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
 import org.apache.paimon.catalog.CatalogFactory;
+import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema.Builder;
+import org.apache.paimon.table.CatalogTableType;
 
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_HIVE_CONF_DIR;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_METASTORE_URI;
@@ -67,14 +69,14 @@ public class HiveCatalog extends PaimonCatalog {
         // Paimon Hive catalog relies on Hive jars
         // You should add hive classpath or hive bundled jar.
         Options options = new Options();
-        CatalogContext context;
+        //   context;
         if (StringUtils.isEmpty(catalogPath)) {
             throw new IllegalStateException("prop catalogPath can not be empty");
         }
-        options.set("warehouse", catalogPath);
-        options.set("metastore", "hive");
+        options.set(CatalogOptions.WAREHOUSE, catalogPath);
+        options.set(CatalogOptions.METASTORE, "hive");
         //默认设置为外部表
-        options.set("table.type", "external");
+        options.set(CatalogOptions.TABLE_TYPE, CatalogTableType.EXTERNAL);
 
         /**
          * 1.如果metastore uri 存在，则不需要设置 hiveConfDir
@@ -82,7 +84,7 @@ public class HiveCatalog extends PaimonCatalog {
          */
         String metastoreUri = hiveConnGetter.getMetaStoreUrls();
         if (StringUtils.isNotBlank(metastoreUri)) {
-            options.set("uri", metastoreUri);
+            options.set(CatalogOptions.URI, metastoreUri);
 //        } else if (StringUtils.isNotBlank(hiveConfDir)) {
 //            options.set("hive-conf-dir", hiveConfDir);
         } else {
@@ -106,7 +108,7 @@ public class HiveCatalog extends PaimonCatalog {
 //        }
 
         Configuration hadoopConfig = fsFactory.getConfiguration();
-        context = CatalogContext.create(options, hadoopConfig);
+        CatalogContext context = CatalogContext.create(options, hadoopConfig);
 
         return CatalogFactory.createCatalog(context);
 
