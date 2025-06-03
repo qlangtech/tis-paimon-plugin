@@ -3,6 +3,8 @@ package com.qlangtech.tis.plugin.paimon.datax;
 import com.alibaba.datax.common.element.Column;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.TIS;
+import com.qlangtech.tis.datax.IDataxContext;
+import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
 import com.qlangtech.tis.datax.impl.DataxWriter;
 import com.qlangtech.tis.extension.Descriptor;
@@ -12,10 +14,13 @@ import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.fullbuild.taskflow.IFlatTableBuilderDescriptor;
 import com.qlangtech.tis.manage.common.Option;
+import com.qlangtech.tis.plugin.KeyedPluginStore;
+import com.qlangtech.tis.plugin.KeyedPluginStore.Key;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.datax.BasicFSWriter;
+import com.qlangtech.tis.plugin.datax.BasicFSWriter.FSDataXContext;
 import com.qlangtech.tis.plugin.datax.HdfsWriterDescriptor;
 import com.qlangtech.tis.plugin.datax.transformer.RecordTransformerRules;
 import com.qlangtech.tis.plugin.ds.DataType;
@@ -26,12 +31,14 @@ import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.data.BinaryString;
 import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.options.ConfigOptions;
+import org.apache.paimon.schema.Schema.Builder;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.types.BigIntType;
 import org.apache.paimon.types.BinaryType;
@@ -59,7 +66,7 @@ import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-15 14:56
  **/
-public class DataxPaimonWriter extends BasicFSWriter {
+public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware {
 
 
     @FormField(ordinal = 1, validate = {Validator.require})
@@ -68,9 +75,13 @@ public class DataxPaimonWriter extends BasicFSWriter {
     @FormField(ordinal = 6, type = FormFieldType.ENUM, validate = {Validator.require})
     public String storeFormat;
 
+    /**
+     * https://paimon.apache.org/docs/master/maintenance/configurations/#coreoptions
+     * Bucket number for file store.
+     * It should either be equal to -1 (dynamic bucket mode), -2 (postpone bucket mode), or it must be greater than 0 (fixed bucket mode).
+     */
     @FormField(ordinal = 7, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer tableBucket;
-
 
 
     @FormField(ordinal = 11, validate = {Validator.require})
@@ -89,8 +100,28 @@ public class DataxPaimonWriter extends BasicFSWriter {
     @FormField(ordinal = 22, type = FormFieldType.TEXTAREA, advance = false, validate = {Validator.require})
     public String template;
 
+    public String dataXName;
+
     @Override
-    protected void startScanFSWriterDependency() {
+    public void setKey(Key key) {
+        this.dataXName = key.keyVal.getVal();
+    }
+
+    @Override
+    public void initializeSchemaBuilder(Builder tabSchemaBuilder) {
+
+        DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
+        desc.opts.setTarget((field, val) -> {
+            tabSchemaBuilder.option(field.key(), String.valueOf(val));
+        }, this);
+
+        this.compaction.initializeSchemaBuilder(tabSchemaBuilder);
+        this.snapshot.initializeSchemaBuilder(tabSchemaBuilder);
+    }
+
+
+    @Override
+    public void startScanDependency() {
         this.catalog.startScanDependency();
     }
 
@@ -100,16 +131,23 @@ public class DataxPaimonWriter extends BasicFSWriter {
 
 
     @Override
-    protected FSDataXContext getDataXContext(TableMap tableMap, Optional<RecordTransformerRules> transformerRules) {
-        return new PaimonFSDataXContext(tableMap, this.dataXName, transformerRules);
+    public IDataxContext getSubTask(Optional<TableMap> tableMap, Optional<RecordTransformerRules> transformerRules) {
+        if (!tableMap.isPresent()) {
+            throw new IllegalArgumentException("param tableMap shall be present");
+        }
+        if (StringUtils.isBlank(this.dataXName)) {
+            throw new IllegalStateException("param 'dataXName' can not be null");
+        }
+        return new PaimonFSDataXContext(tableMap.get(), this.dataXName, transformerRules);
     }
 
+
     public List<PaimonColumn> createPaimonCols(PaimonSelectedTab tab, Optional<RecordTransformerRules> transformerRules) {
-        return ((PaimonFSDataXContext) getDataXContext(new TableMap(tab), transformerRules)).getPaimonCols();
+        return ((PaimonFSDataXContext) getSubTask(Optional.of(new TableMap(tab)), transformerRules)).getPaimonCols();
     }
 
     public Catalog createCatalog() {
-        return this.catalog.createCatalog(this.getFsFactory());
+        return this.catalog.createCatalog();
     }
 
     public PaimonTableWriter createWriter(Table table) {
@@ -131,15 +169,26 @@ public class DataxPaimonWriter extends BasicFSWriter {
         }
     };
 
-    public class PaimonFSDataXContext extends FSDataXContext {
+
+    public class PaimonFSDataXContext implements IDataxContext {
+        protected final IDataxProcessor.TableMap tabMap;
+        private final String dataxName;
+        private final List<IColMetaGetter> cols;
+
         public PaimonFSDataXContext(TableMap tabMap, String dataxName, Optional<RecordTransformerRules> transformerRules) {
-            super(tabMap, dataxName, transformerRules);
+            //super(tabMap, dataxName, transformerRules);
+            this.tabMap = tabMap;
+            this.dataxName = dataxName;
+            this.cols = tabMap.appendTransformerRuleCols(transformerRules);
         }
 
         public final String getSourceTableName() {
             return this.tabMap.getFrom();
         }
 
+        public final List<IColMetaGetter> getCols() {
+            return this.cols;
+        }
 
         /**
          * @return
@@ -205,6 +254,7 @@ public class DataxPaimonWriter extends BasicFSWriter {
         return Objects.requireNonNull(template, "template can not be null");
     }
 
+
     /**
      * impl End: IDataXBatchPost
      * ========================================================
@@ -212,11 +262,11 @@ public class DataxPaimonWriter extends BasicFSWriter {
     @TISExtension()
     public static class DefaultDescriptor extends HdfsWriterDescriptor implements IFlatTableBuilderDescriptor, DataxWriter.IRewriteSuFormProperties {
 
-
+        Options<DataxWriter, ConfigOption> opts;
 
         public DefaultDescriptor() {
             super();
-            Options<DataxWriter, ConfigOption> opts = PaimonPropAssist.createOpts(this);
+            opts = PaimonPropAssist.createOpts(this);
             opts.addFieldDescriptor("tableBucket", CoreOptions.BUCKET);
             OverwriteProps fileFormatOverwriteProps = new OverwriteProps();
             fileFormatOverwriteProps.setEnumOpts(

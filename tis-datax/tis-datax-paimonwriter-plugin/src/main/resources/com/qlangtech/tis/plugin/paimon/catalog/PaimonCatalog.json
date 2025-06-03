@@ -1,6 +1,28 @@
 {
-  "catalogPath": {
-    "help": "paimon创建的catalog路径，可以包含文件系统的和hdfs系统的路径",
-    "placeholder": "example:'/app/hive/warehouse'"
+  "fsName": {
+    "help": "描述：Hadoop hdfs文件系统namenode节点地址。格式：hdfs://ip:端口；例如：hdfs://127.0.0.1:9000",
+    "creator": {
+      "label": "管理",
+      "plugin": [
+        {
+          "hetero": "fs",
+          "descName": "HDFS"
+        },
+        {
+          "hetero": "fs",
+          "descName": "Aliyun-Jindo-HDFS"
+        }
+      ]
+    }
+  },
+  "catalogLock": {
+    "dftVal": "off",
+    "label": "Lock",
+    "help": "Enable Catalog Lock."
+  },
+  "catalogCache": {
+    "dftVal": "off",
+    "label": "Cache",
+    "help": "Controls whether the catalog will cache databases, tables, manifests and partitions."
   }
 }

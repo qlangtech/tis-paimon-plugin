@@ -3,7 +3,6 @@ package com.qlangtech.tis.plugins.incr.flink.connector;
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
 import com.qlangtech.tis.plugins.incr.flink.cdc.AbstractTransformerRecord;
 import org.apache.flink.cdc.common.event.Event;
-import org.apache.flink.table.data.RowData;
 
 import java.util.List;
 

@@ -3,15 +3,12 @@ package com.qlangtech.tis.plugin.paimon.catalog;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
 import com.qlangtech.tis.config.hive.meta.HiveTable;
 import com.qlangtech.tis.config.hive.meta.IHiveMetaStore;
-import com.qlangtech.tis.offline.FileSystemFactory;
 import com.qlangtech.tis.plugin.common.PluginDesc;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import org.apache.paimon.catalog.Catalog;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -37,9 +34,9 @@ public class TestHiveCatalog {
     @Test
     public void testCreateCatalog() throws Exception {
         HiveCatalog hiveCatalog = PaimonTestUtils.createHiveCatalog();
-        FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
+       // FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
         Assert.assertNotNull(hiveCatalog);
-        Catalog catalog = hiveCatalog.createCatalog(fsFactory);
+        Catalog catalog = hiveCatalog.createCatalog();
         Assert.assertNotNull("catalog can not be null", catalog);
 
         //  catalog.createDatabase("paimon", true);

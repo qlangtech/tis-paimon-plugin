@@ -23,8 +23,9 @@ public class PaimonTestUtils {
         HiveCatalog hiveCatalog = createHiveCatalog();
         writer.catalog = hiveCatalog;
         BatchInsertWriteMode writeMode = new BatchInsertWriteMode();
-        writer.fsName = KEY_HDFS200;
+        // writer.fsName = KEY_HDFS200;
         writer.paimonWriteMode = writeMode;
+        writer.tableBucket = 1;
         //writer.autoCreateTable = AutoCreateTable.dft();
 
         return writer;
@@ -34,7 +35,8 @@ public class PaimonTestUtils {
         HiveCatalog hiveCatalog = new HiveCatalog();
         hiveCatalog.dbName = "hive200_2";
         hiveCatalog.tableOwner = "hive";
-        hiveCatalog.catalogPath = "/user/hive/warehouse/paimon";
+        hiveCatalog.dbName = KEY_HDFS200;
+        //hiveCatalog.catalogPath = "/user/hive/warehouse/paimon";
         return hiveCatalog;
     }
 }

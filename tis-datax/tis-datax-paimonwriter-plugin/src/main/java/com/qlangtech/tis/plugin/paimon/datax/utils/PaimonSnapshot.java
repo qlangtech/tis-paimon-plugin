@@ -9,9 +9,11 @@ import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
+import com.qlangtech.tis.plugin.paimon.datax.SchemaBuilderSetter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.ConfigOption;
+import org.apache.paimon.schema.Schema.Builder;
 
 import java.time.Duration;
 import java.util.function.Function;
@@ -27,7 +29,7 @@ import java.util.function.Function;
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-15 15:49
  **/
-public class PaimonSnapshot implements Describable<PaimonSnapshot> {
+public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilderSetter {
     /**
      * @see org.apache.paimon.CoreOptions#SNAPSHOT_NUM_RETAINED_MIN
      */
@@ -46,8 +48,18 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot> {
     @FormField(ordinal = 3, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer timeRetained;
 
+    @Override
+    public void initializeSchemaBuilder(Builder schemaBuilder) {
+        DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
+        desc.opts.setTarget((field, val) -> {
+            schemaBuilder.option(field.key(), String.valueOf(val));
+        }, this);
+    }
+
     @TISExtension
     public static final class DefaultDescriptor extends Descriptor<PaimonSnapshot> {
+        private Options<PaimonSnapshot, ConfigOption> opts;
+
         public DefaultDescriptor() {
             super();
             Options<PaimonSnapshot, ConfigOption> opts = PaimonPropAssist.createOpts(this);

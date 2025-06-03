@@ -14,5 +14,8 @@
   },
   "fileType": {
     "disable": true
+  },
+  "compress": {
+    "disable": true
   }
 }

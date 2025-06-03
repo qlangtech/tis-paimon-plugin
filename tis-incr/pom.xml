@@ -10,6 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <!--Reference: https://nightlies.apache.org/flink/flink-cdc-docs-release-3.4/docs/connectors/pipeline-connectors/paimon/-->
     <artifactId>tis-paimon-incr</artifactId>
     <packaging>pom</packaging>
     <properties>
@@ -39,7 +40,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-cdc-composer</artifactId>
+                <artifactId>flink-cdc-composer-tis</artifactId>
                 <version>${flink.cdc.version}</version>
             </dependency>
         </dependencies>

@@ -95,6 +95,7 @@ public class PaimonWriter extends Writer {
         private String hdfsSitePath;
         private org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration();
         private List<PaimonColumn> paimonCols;
+        private DataxPaimonWriter paimonWriter;
 
         @Override
         public void init() {
@@ -159,21 +160,6 @@ public class PaimonWriter extends Writer {
 
                 catalog = paimonWriter.createCatalog();
 
-//                switch (catalogType) {
-//                    case PAIMON_CATALOG_FILE:
-//                        catalog = createFilesystemCatalog();
-//                        break;
-//                    case PAIMON_CATALOG_HIVE:
-//                        metastoreUri = sliceConfig.getString(PAIMON_METASTORE_URI);
-//                        hiveConfDir = sliceConfig.getString(PAIMON_HIVE_CONF_DIR);
-//                        hadoopConfDir = sliceConfig.getString(PAIMON_HADOOP_CONF_DIR);
-//                        catalog = createHiveCatalog();
-//                        break;
-//                    default:
-//                        LOG.error("unsupported catalog type :{}", catalogType);
-//                        break;
-//                }
-
                 if (!tableExists(catalog, dbName, tableName)) {
                     LOG.info("{} 表不存在，开始创建...", dbName.concat("." + tableName));
                     createTable(catalog, dbName, tableName, paimonCols, selectedTab.getPrimaryKeys(), selectedTab.partitionPathFields);
@@ -194,32 +180,6 @@ public class PaimonWriter extends Writer {
         @Override
         public void startWrite(RecordReceiver recordReceiver) {
             Record record;
-//            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//            DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            //WriteBuilder writeBuilder = null;
-            //Write records in distributed tasks
-            // TableWrite write = null;
-            // Boolean isStream = false;
-
-
-//            switch (writeOption) {
-//                case PAIMON_WRITE_OPTION_BATCH_INSERT:
-//                    writeBuilder = table.newBatchWriteBuilder().withOverwrite();
-//                    write = writeBuilder.newWrite();
-//                    break;
-//                case PAIMON_WRITE_OPTION_STREAM_INSERT:
-//                    writeBuilder = table.newStreamWriteBuilder();
-//                    write = writeBuilder.newWrite();
-//                    isStream = true;
-//                    break;
-//                default:
-//                    LOG.error("unsupported write option type :{}", writeOption);
-//            }
-
-            // TableCommit commit = null;
-            // List<CommitMessage> messages = null;
-            // AtomicLong counter = new AtomicLong(0);
             long num = 0;
             long commitIdentifier = 0;
             PaimonColumn configuration = null;
@@ -239,62 +199,12 @@ public class PaimonWriter extends Writer {
                     }
 
                     row.setField(i, configuration.getPaimonFieldVal(column));
-
-//                    switch (columnType) {
-//                        case "int":
-//                            row.setField(i, Integer.parseInt(rawData.toString()));
-//                            break;
-//                        case "long":
-//                            row.setField(i, Long.parseLong(rawData.toString()));
-//                            break;
-//                        case "float":
-//                            row.setField(i, Float.parseFloat(rawData.toString()));
-//                            break;
-//                        case "double":
-//                            row.setField(i, Double.parseDouble(rawData.toString()));
-//                            break;
-//                        case "date":
-//                            row.setField(i, dateFormat.format(rawData));
-//                            break;
-//                        case "datetime":
-//                            row.setField(i, dateTimeFormat.format(rawData));
-//                            break;
-//                        case "boolean":
-//                            row.setField(i, Boolean.parseBoolean(rawData.toString()));
-//                            break;
-//                        case "string":
-//                            if (column instanceof DateColumn) {
-//                                row.setField(i, BinaryString.fromString(column.asString()));
-//                                break;
-//                            }
-//                        default:
-//                            row.setField(i, BinaryString.fromString(rawData.toString()));
-//                    }
-
                 }
-                //  try {
                 try {
                     this.paimonTableWriter.writeRow(row, bucket);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-//                    write.write(row, bucket);
-//                    if (isStream) {
-//                        num = counter.incrementAndGet();
-//                        commitIdentifier++;
-//                        if (num >= batchSize) {
-//                            List<CommitMessage> streamMsgs = ((StreamTableWrite) write).prepareCommit(false, commitIdentifier);
-//                            // Collect all CommitMessages to a global node and commit
-//                            StreamTableCommit stc = (StreamTableCommit) writeBuilder.newCommit();
-//                            stc.commit(commitIdentifier, streamMsgs);
-//                            counter.set(0L);
-//                        }
-//                    }
-
-//                } catch (Exception e) {
-//                    LOG.error("write is failed!", e);
-//                }
-
             }
 
 
@@ -304,82 +214,9 @@ public class PaimonWriter extends Writer {
                 throw new RuntimeException(e);
             }
 
-//            try {
-//                flushCache(isStream, commitIdentifier, num, writeBuilder, write, messages, commit);
-//            } catch (Exception e) {
-//                //Abort unsuccessful commit to delete data files
-//                if (null != commit) {
-//                    commit.abort(messages);
-//                }
-//                LOG.error("data commit is failed!", e);
-//            }
 
         }
 
-//        public void flushCache(boolean isStream, long commitIdentifier, long num, WriteBuilder writeBuilder, TableWrite write, List<CommitMessage> messages, TableCommit commit) throws Exception {
-//
-//            if (isStream && num > 0) {
-//                messages = ((StreamTableWrite) write).prepareCommit(false, commitIdentifier);
-//                // Collect all CommitMessages to a global node and commit
-//                StreamTableCommit stc = (StreamTableCommit) writeBuilder.newCommit();
-//                stc.commit(commitIdentifier, messages);
-//            } else {
-//                messages = ((BatchTableWrite) write).prepareCommit();
-//                //Collect all CommitMessages to a global node and commit
-//                commit = writeBuilder.newCommit();
-//
-//                if (commit == null || messages == null) {
-//                    throw new RuntimeException("commit or messages info not exist");
-//                }
-//                ((BatchTableCommit) commit).commit(messages);
-//            }
-//
-//        }
-
-        //file system catalog
-
-
-        //hive catalog
-//        public Catalog createHiveCatalog() {
-//            // Paimon Hive catalog relies on Hive jars
-//            // You should add hive classpath or hive bundled jar.
-//            Options options = new Options();
-//            CatalogContext context;
-//            options.set("warehouse", catalogPath);
-//            options.set("metastore", catalogType);
-//            //默认设置为外部表
-//            options.set("table.type", "external");
-//
-//            /**
-//             * 1.如果metastore uri 存在，则不需要设置 hiveConfDir
-//             * 2.如果metastore uri 不存在，读取 hiveConfDir下的hive-site.xml也可以
-//             */
-//            if (StringUtils.isNotBlank(metastoreUri)) {
-//                options.set("uri", metastoreUri);
-//            } else if (StringUtils.isNotBlank(hiveConfDir)) {
-//                options.set("hive-conf-dir", hiveConfDir);
-//            } else {
-//                throw DataXException.asDataXException(PAIMON_PARAM_LOST,
-//                        String.format("您提供配置文件有误，[%s]和[%s]参数，至少需要配置一个，不允许为空或者留白 .", PAIMON_METASTORE_URI, PAIMON_HIVE_CONF_DIR));
-//            }
-//
-//            /**
-//             * 1：通过配置hadoop-conf-dir(目录中必须包含hive-site.xml,core-site.xml文件)来创建catalog
-//             * 2：通过配置hadoopConf(指定：coreSitePath：/path/core-site.xml,hdfsSitePath: /path/hdfs-site.xml)的方式来创建catalog
-//             */
-//            if (StringUtils.isNotBlank(hadoopConfDir)) {
-//                options.set("hadoop-conf-dir", hadoopConfDir);
-//                context = CatalogContext.create(options);
-//            } else if (StringUtils.isNotBlank(coreSitePath) && StringUtils.isNotBlank(hdfsSitePath)) {
-//                context = CatalogContext.create(options, hadoopConf);
-//            } else {
-//                throw DataXException.asDataXException(PAIMON_PARAM_LOST,
-//                        String.format("您提供配置文件有误，[%s]和[%s]参数，至少需要配置一个，不允许为空或者留白 .", PAIMON_HADOOP_CONF_DIR, "hadoopConfig:coreSiteFile&&hdfsSiteFile"));
-//            }
-//
-//            return CatalogFactory.createCatalog(context);
-//
-//        }
 
         public void createTable(Catalog catalog, String dbName, String tableName, List<PaimonColumn> cols, List<String> pks, List<String> partKeys) {
 
@@ -394,6 +231,7 @@ public class PaimonWriter extends Writer {
                     schemaBuilder.option(each, paimonParamsAsJsonObject.getString(each));
                 }
             }
+            this.paimonWriter.initializeSchemaBuilder(schemaBuilder);
 
             for (PaimonColumn columnConfig : cols) {
 //                String columnName = columnConfig.getString("name");

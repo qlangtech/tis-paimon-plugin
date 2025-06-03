@@ -2,7 +2,6 @@ package com.qlangtech.tis.plugin.paimon.catalog;
 
 import com.alibaba.datax.common.exception.DataXException;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
-import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.offline.FileSystemFactory;
 import com.qlangtech.tis.plugin.annotation.FormField;
@@ -19,6 +18,9 @@ import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema.Builder;
 import org.apache.paimon.table.CatalogTableType;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_HIVE_CONF_DIR;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_METASTORE_URI;
 import static com.alibaba.datax.plugin.writer.paimonwriter.PaimonWriterErrorCode.PAIMON_PARAM_LOST;
@@ -33,8 +35,19 @@ public class HiveCatalog extends PaimonCatalog {
     public String dbName;
 
     @Override
+    public Optional<String> getDBName() {
+        return Optional.of(getHiveConnGetter().getDbName());
+    }
+
+    @Override
+    public Options createOpts() {
+        return createOptions(this.getHiveConnGetter(), this.getFs());
+    }
+
+    @Override
     public void startScanDependency() {
         this.getDataSourceFactory();
+        this.getRootDir();
     }
 
     @Override
@@ -43,12 +56,12 @@ public class HiveCatalog extends PaimonCatalog {
     }
 
     @Override
-    public Catalog createCatalog(FileSystemFactory fileSystemFactory) {
+    public Catalog createCatalog() {
 
 //        metastoreUri = sliceConfig.getString(PAIMON_METASTORE_URI);
 //        hiveConfDir = sliceConfig.getString(PAIMON_HIVE_CONF_DIR);
 //        hadoopConfDir = sliceConfig.getString(PAIMON_HADOOP_CONF_DIR);
-        return this.createHiveCatalog(this.getHiveConnGetter(), fileSystemFactory);
+        return this.createHiveCatalog(this.getHiveConnGetter(), this.getFs());
     }
 
 
@@ -68,12 +81,22 @@ public class HiveCatalog extends PaimonCatalog {
     private Catalog createHiveCatalog(IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
         // Paimon Hive catalog relies on Hive jars
         // You should add hive classpath or hive bundled jar.
+        Options options = createOptions(hiveConnGetter, fsFactory);
+
+        Configuration hadoopConfig = fsFactory.getConfiguration();
+        CatalogContext context = CatalogContext.create(options, hadoopConfig);
+
+        return CatalogFactory.createCatalog(context);
+
+    }
+
+    private Options createOptions(IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
         Options options = new Options();
         //   context;
-        if (StringUtils.isEmpty(catalogPath)) {
+        if (StringUtils.isEmpty(Objects.requireNonNull(fsFactory, "fsFactory can not be null").getRootDir())) {
             throw new IllegalStateException("prop catalogPath can not be empty");
         }
-        options.set(CatalogOptions.WAREHOUSE, catalogPath);
+        options.set(CatalogOptions.WAREHOUSE, fsFactory.getRootDir());
         options.set(CatalogOptions.METASTORE, "hive");
         //默认设置为外部表
         options.set(CatalogOptions.TABLE_TYPE, CatalogTableType.EXTERNAL);
@@ -92,6 +115,8 @@ public class HiveCatalog extends PaimonCatalog {
                     String.format("您提供配置文件有误，[%s]和[%s]参数，至少需要配置一个，不允许为空或者留白 .", PAIMON_METASTORE_URI, PAIMON_HIVE_CONF_DIR));
         }
 
+        this.catalogLock.setOptions(options);
+
 //        /**
 //         * 1：通过配置hadoop-conf-dir(目录中必须包含hive-site.xml,core-site.xml文件)来创建catalog
 //         * 2：通过配置hadoopConf(指定：coreSitePath：/path/core-site.xml,hdfsSitePath: /path/hdfs-site.xml)的方式来创建catalog
@@ -106,12 +131,7 @@ public class HiveCatalog extends PaimonCatalog {
 //                    String.format("您提供配置文件有误，[%s]和[%s]参数，至少需要配置一个，不允许为空或者留白 ."
 //                            , PAIMON_HADOOP_CONF_DIR, "hadoopConfig:coreSiteFile&&hdfsSiteFile"));
 //        }
-
-        Configuration hadoopConfig = fsFactory.getConfiguration();
-        CatalogContext context = CatalogContext.create(options, hadoopConfig);
-
-        return CatalogFactory.createCatalog(context);
-
+        return options;
     }
 
     @Override
@@ -120,14 +140,14 @@ public class HiveCatalog extends PaimonCatalog {
     }
 
     @TISExtension
-    public static final class DefaultDescriptor extends Descriptor<PaimonCatalog> {
+    public static final class DefaultDescriptor extends BasicCatalogDescriptor {
         public DefaultDescriptor() {
             super();
         }
 
         @Override
         public String getDisplayName() {
-            return "HiveMetaStore";
+            return "Hive";
         }
     }
 }

@@ -18,7 +18,7 @@ import org.apache.flink.cdc.runtime.typeutils.BinaryRecordDataGenerator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * @author: 百岁（baisui@qlangtech.com）
@@ -28,11 +28,12 @@ import java.util.stream.Collectors;
 public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChangeEvent, Event> {
     private transient Map<String, BinaryRecordDataGenerator> tab2GenMapper;
     private final Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper;
+    private final String sinkDBName;
 
-    public DTO2FlinkPipelineEventMapper(Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper) {
+    public DTO2FlinkPipelineEventMapper(Optional<String> dbName, Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper) {
         super(DTOConvertTo.FlinkCDCPipelineEvent);
-
         this.sourceColsMetaMapper = sourceColsMetaMapper;
+        this.sinkDBName = dbName.orElse(null);
 //        this.tab2GenMapper
 //                = sourceColsMetaMapper.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> {
 //            List<FlinkCol> cols = e.getValue();
@@ -81,15 +82,17 @@ public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChang
     protected DataChangeEvent createRowData(DTO dto) {
         DataChangeEvent changeEvent = null;
 
-        TableId tableId = StringUtils.isEmpty(dto.getDbName())
+        TableId tableId = StringUtils.isEmpty(sinkDBName)
                 ? TableId.tableId(dto.getTableName())
-                : TableId.tableId(dto.getDbName(), dto.getTableName());
+                : TableId.tableId(sinkDBName, dto.getTableName());
         Map<String, Object> beforeVals = dto.getBefore();
         Map<String, Object> afterVals = dto.getAfter();
 
-        final BinaryRecordDataGenerator recordDataGenerator = Objects.requireNonNull(
-                tab2GenMapper.get(tableId.getTableName())
-                , "table:" + tableId.getTableName() + " relevant recordDataGenerator can not be null");
+//        final BinaryRecordDataGenerator recordDataGenerator = Objects.requireNonNull(
+//                tab2GenMapper.get(tableId.getTableName())
+//                , "table:" + tableId.getTableName() + " relevant recordDataGenerator can not be null");
+
+        final BinaryRecordDataGenerator recordDataGenerator = this.getRecordDataGenerator(tableId);
 
         List<FlinkCol> sourceColsMeta = Objects.requireNonNull(sourceColsMetaMapper.get(tableId.getTableName())
                 , "table:" + tableId.getTableName() + " relevant sourceColsMeta can not be null");
@@ -113,8 +116,8 @@ public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChang
                 changeEvent = DataChangeEvent.deleteEvent(tableId, before);
                 break;
             case ADD:
-                before = createRecordData(recordDataGenerator, sourceColsMeta, beforeVals);
-                changeEvent = DataChangeEvent.insertEvent(tableId, before);
+                after = createRecordData(recordDataGenerator, sourceColsMeta, afterVals);
+                changeEvent = DataChangeEvent.insertEvent(tableId, after);
                 break;
             default:
                 throw new IllegalStateException("illegal event type:" + event);
@@ -127,9 +130,13 @@ public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChang
             , List<FlinkCol> sourceColsMeta, Map<String, Object> vals) {
         Object[] rowFields = new Object[sourceColsMeta.size()];
         FlinkCol flinkCol = null;
+        Object val = null;
         for (int idx = 0; idx < sourceColsMeta.size(); idx++) {
             flinkCol = sourceColsMeta.get(idx);
-            rowFields[idx] = flinkCol.processVal(this.dtoConvert2Type, vals);
+            val = vals.get(flinkCol.name);
+            if (val != null) {
+                rowFields[idx] = flinkCol.processVal(this.dtoConvert2Type, val);
+            }
         }
         return recordDataGenerator.generate(rowFields);
     }

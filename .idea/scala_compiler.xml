@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="Maven 1" modules="tis-datax-paimonwriter-plugin,tis-flink-pipeline-paimon-plugin,tis-paimon-datax,tis-paimon-incr,tis-paimon-plugin">
+      <parameters>
+        <parameter value="-nobootcp" />
+      </parameters>
+    </profile>
+  </component>
+</project>

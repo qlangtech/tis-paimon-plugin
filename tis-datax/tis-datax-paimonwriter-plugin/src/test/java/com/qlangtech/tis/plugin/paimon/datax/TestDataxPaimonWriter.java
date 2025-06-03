@@ -20,8 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.Optional;
 
 /**

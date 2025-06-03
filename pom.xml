@@ -29,6 +29,7 @@
 
     <properties>
 <!--        <flink.cdc.version>3.4.0</flink.cdc.version>-->
+        <paimon.version>1.1.1</paimon.version>
     </properties>
 
 </project>

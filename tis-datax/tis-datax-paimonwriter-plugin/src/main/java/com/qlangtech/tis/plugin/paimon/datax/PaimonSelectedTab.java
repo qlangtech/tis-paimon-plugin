@@ -17,9 +17,6 @@ import java.util.stream.Collectors;
  **/
 public class PaimonSelectedTab extends SelectedTab {
 
-//    @FormField(ordinal = 2, type = FormFieldType.ENUM, validate = {Validator.require})
-//    public List<String> recordFields;
-
     /**
      * 分区字段
      */
