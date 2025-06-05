@@ -23,7 +23,7 @@ public class PaimonPropAssist<T extends Describable> extends AbstractPropAssist<
     public static <T extends Describable, PLUGIN extends T> Options<PLUGIN, org.apache.paimon.options.ConfigOption>
     createOpts(Descriptor<T> descriptor) {
         PaimonPropAssist props = new PaimonPropAssist(descriptor);
-        return props.createFlinkOptions();
+        return props.createOptions();
     }
 
     @Override

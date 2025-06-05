@@ -8,6 +8,7 @@ import org.apache.paimon.schema.Schema.Builder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Map;
 
 /**
@@ -20,8 +21,8 @@ public class TestPaimonCompaction {
     public void initializeSchemaBuilder() {
         PaimonCompaction paimonCompaction = new PaimonCompaction();
         paimonCompaction.minFileNum = 1;
-       // paimonCompaction.maxFileNum = 2;
-        paimonCompaction.optimizationInterval = 60;
+        // paimonCompaction.maxFileNum = 2;
+        paimonCompaction.optimizationInterval = Duration.ofSeconds(60);
         paimonCompaction.sizeRatio = 1;
         paimonCompaction.sizeAmplificationPercent = 200;
 
@@ -33,7 +34,7 @@ public class TestPaimonCompaction {
 
         Map<String, String> expectOptions = Maps.newHashMap();
         expectOptions.put(CoreOptions.COMPACTION_MIN_FILE_NUM.key(), String.valueOf(paimonCompaction.minFileNum));
-       // expectOptions.put(CoreOptions.COMPACTION_MAX_FILE_NUM.key(), String.valueOf(paimonCompaction.maxFileNum));
+        // expectOptions.put(CoreOptions.COMPACTION_MAX_FILE_NUM.key(), String.valueOf(paimonCompaction.maxFileNum));
         expectOptions.put(CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL.key(), String.valueOf(paimonCompaction.optimizationInterval));
         expectOptions.put(CoreOptions.COMPACTION_SIZE_RATIO.key(), String.valueOf(paimonCompaction.sizeRatio));
         expectOptions.put(CoreOptions.COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT.key(), String.valueOf(paimonCompaction.sizeAmplificationPercent));

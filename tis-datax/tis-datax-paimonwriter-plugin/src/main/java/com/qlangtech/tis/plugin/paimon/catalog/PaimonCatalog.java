@@ -38,6 +38,7 @@ public abstract class PaimonCatalog implements Describable<PaimonCatalog>, IRepo
     @FormField(ordinal = 2, advance = true, validate = {Validator.require})
     public CatalogLock catalogLock;
 
+    @FormField(ordinal = 3, advance = true, validate = {Validator.require})
     public CatalogCache catalogCache;
 
 

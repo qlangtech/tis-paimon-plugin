@@ -1,56 +1,296 @@
 {
-  "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog": {
-    "attrs": [
+  "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog":{
+    "attrs":[
       {
-        "describable": false,
-        "eprops": {
-          "creator": {
-            "assistType": "dbQuickManager",
-            "label": "配置",
-            "plugin": [
+        "describable":false,
+        "eprops":{
+          "creator":{
+            "assistType":"dbQuickManager",
+            "label":"配置",
+            "plugin":[
               {
-                "descName": "Hiveserver2",
-                "extraParam": "type_detailed,update_false,disableBizStore_true",
-                "hetero": "datasource"
+                "descName":"Hiveserver2",
+                "extraParam":"type_detailed,update_false,disableBizStore_true",
+                "hetero":"datasource"
               }
             ]
           },
-          "label": "hiveserver2"
+          "label":"hiveserver2"
         },
-        "key": "dbName",
-        "ord": 0,
-        "pk": false,
-        "required": true,
-        "type": 5
+        "key":"dbName",
+        "ord":0,
+        "pk":false,
+        "required":true,
+        "type":5
       },
       {
-        "describable": false,
-        "eprops": {
-          "help": "paimon创建的catalog路径，可以包含文件系统的和hdfs系统的路径",
-          "placeholder": "example:'/app/hive/warehouse'"
-        },
-        "key": "catalogPath",
-        "ord": 0,
-        "pk": false,
-        "required": true,
-        "type": 1
+        "describable":false,
+        "key":"tableOwner",
+        "ord":1,
+        "pk":false,
+        "required":true,
+        "type":1
       },
       {
-        "describable": false,
-        "key": "tableOwner",
-        "ord": 1,
-        "pk": false,
-        "required": true,
-        "type": 1
+        "describable":false,
+        "eprops":{
+          "creator":{
+            "assistType":"paramCfg",
+            "label":"管理",
+            "plugin":[
+              {
+                "descName":"HDFS",
+                "hetero":"fs"
+              },
+              {
+                "descName":"Aliyun-Jindo-HDFS",
+                "hetero":"fs"
+              }
+            ]
+          },
+          "help":"描述：Hadoop hdfs文件系统namenode节点地址。格式：hdfs://ip:端口；例如：hdfs://127.0.0.1:9000"
+        },
+        "key":"fsName",
+        "options":[
+          {
+            "impl":"com.qlangtech.tis.hdfs.impl.HdfsFileSystemFactory",
+            "name":"hdfs200"
+          }
+        ],
+        "ord":1,
+        "pk":false,
+        "required":true,
+        "type":6
+      },
+      {
+        "advance":true,
+        "describable":true,
+        "descriptors":{
+          "com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF":{
+            "attrs":[
+
+            ],
+            "containAdvance":false,
+            "displayName":"off",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+            "extractProps":{
+
+            },
+            "impl":"com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloglockcataloglockoff",
+            "veriflable":false
+          },
+          "com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockON":{
+            "attrs":[
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "enum":[
+                    {
+                      "label":"hive",
+                      "val":"hive"
+                    },
+                    {
+                      "label":"zookeeper",
+                      "val":"zookeeper"
+                    }
+                  ]
+                },
+                "key":"type",
+                "ord":0,
+                "pk":false,
+                "required":false,
+                "type":5
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":8,
+                  "label":"check-max-sleep",
+                  "unit":"Second"
+                },
+                "key":"checkMaxSleep",
+                "ord":1,
+                "pk":false,
+                "required":true,
+                "type":12
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":8,
+                  "label":"acquire-timeout",
+                  "unit":"Minute"
+                },
+                "key":"acquireTimeout",
+                "ord":2,
+                "pk":false,
+                "required":true,
+                "type":12
+              }
+            ],
+            "containAdvance":false,
+            "displayName":"on",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+            "extractProps":{
+
+            },
+            "impl":"com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockON",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloglockcataloglockon",
+            "veriflable":false
+          }
+        },
+        "eprops":{
+          "dftVal":"off",
+          "help":"Enable Catalog Lock.",
+          "label":"Lock"
+        },
+        "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+        "extensible":false,
+        "key":"catalogLock",
+        "ord":2,
+        "pk":false,
+        "required":true,
+        "type":1
+      },
+      {
+        "advance":true,
+        "describable":true,
+        "descriptors":{
+          "com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheOFF":{
+            "attrs":[
+
+            ],
+            "containAdvance":false,
+            "displayName":"off",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+            "extractProps":{
+
+            },
+            "impl":"com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheOFF",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncatalogcachecatalogcacheoff",
+            "veriflable":false
+          },
+          "com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON":{
+            "attrs":[
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":10,
+                  "label":"expiration-interval",
+                  "unit":"Minute"
+                },
+                "key":"expirationInterval",
+                "ord":1,
+                "pk":false,
+                "required":true,
+                "type":12
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":0,
+                  "label":"partition.max-num"
+                },
+                "key":"partitionMaxNum",
+                "ord":2,
+                "pk":false,
+                "required":true,
+                "type":4
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":128,
+                  "label":"manifest.small-file-memory",
+                  "unit":"MB"
+                },
+                "key":"manifestSmallFileMemory",
+                "ord":3,
+                "pk":false,
+                "required":true,
+                "type":12
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":1,
+                  "label":"manifest.small-file-threshold",
+                  "unit":"MB"
+                },
+                "key":"manifestSmallFileThreshold",
+                "ord":4,
+                "pk":false,
+                "required":true,
+                "type":12
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "label":"manifest.max-memory",
+                  "unit":"MB"
+                },
+                "key":"manifestMaxMemory",
+                "ord":5,
+                "pk":false,
+                "required":false,
+                "type":12
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":20,
+                  "label":"snapshot.max-num-per-table"
+                },
+                "key":"snapshotMaxNumPerTable",
+                "ord":6,
+                "pk":false,
+                "required":true,
+                "type":4
+              }
+            ],
+            "containAdvance":false,
+            "displayName":"on",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+            "extractProps":{
+
+            },
+            "impl":"com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncatalogcachecatalogcacheon",
+            "veriflable":false
+          }
+        },
+        "eprops":{
+          "dftVal":"off",
+          "help":"Controls whether the catalog will cache databases, tables, manifests and partitions.",
+          "label":"Cache"
+        },
+        "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+        "extensible":false,
+        "key":"catalogCache",
+        "ord":3,
+        "pk":false,
+        "required":true,
+        "type":1
       }
     ],
-    "containAdvance": false,
-    "displayName": "HiveMetaStore",
-    "extendPoint": "com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog",
-    "extractProps": {
+    "containAdvance":true,
+    "displayName":"Hive",
+    "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog",
+    "extractProps":{
+
     },
-    "impl": "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog",
-    "implUrl": "http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloghivecatalog",
-    "veriflable": false
+    "impl":"com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog",
+    "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloghivecatalog",
+    "veriflable":false
   }
 }

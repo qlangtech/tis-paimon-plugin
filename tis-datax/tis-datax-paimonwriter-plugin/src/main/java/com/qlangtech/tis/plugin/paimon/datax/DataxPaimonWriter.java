@@ -1,5 +1,6 @@
 package com.qlangtech.tis.plugin.paimon.datax;
 
+import com.alibaba.citrus.turbine.Context;
 import com.alibaba.datax.common.element.Column;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.TIS;
@@ -31,6 +32,7 @@ import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
+import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.paimon.CoreOptions;
@@ -80,7 +82,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
      * Bucket number for file store.
      * It should either be equal to -1 (dynamic bucket mode), -2 (postpone bucket mode), or it must be greater than 0 (fixed bucket mode).
      */
-    @FormField(ordinal = 7, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+    @FormField(ordinal = 7, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
     public Integer tableBucket;
 
 
@@ -138,7 +140,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         if (StringUtils.isBlank(this.dataXName)) {
             throw new IllegalStateException("param 'dataXName' can not be null");
         }
-        return new PaimonFSDataXContext(tableMap.get(), this.dataXName, transformerRules);
+        return new PaimonFSDataXContext(this.catalog.getDBName().get(), tableMap.get(), this.dataXName, transformerRules);
     }
 
 
@@ -174,16 +176,33 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         protected final IDataxProcessor.TableMap tabMap;
         private final String dataxName;
         private final List<IColMetaGetter> cols;
+        private final String targetDataBaseName;
 
-        public PaimonFSDataXContext(TableMap tabMap, String dataxName, Optional<RecordTransformerRules> transformerRules) {
+        public PaimonFSDataXContext(String targetDataBaseName, TableMap tabMap, String dataxName, Optional<RecordTransformerRules> transformerRules) {
             //super(tabMap, dataxName, transformerRules);
             this.tabMap = tabMap;
             this.dataxName = dataxName;
             this.cols = tabMap.appendTransformerRuleCols(transformerRules);
+            if (StringUtils.isEmpty(targetDataBaseName)) {
+                throw new IllegalArgumentException("param targetDataBaseName can not be empty");
+            }
+            this.targetDataBaseName = targetDataBaseName;
+        }
+
+        public String getDatabaseName() {
+            return this.targetDataBaseName;
         }
 
         public final String getSourceTableName() {
             return this.tabMap.getFrom();
+        }
+
+        public final String getTableName() {
+            String tabName = this.tabMap.getTo();
+            if (StringUtils.isBlank(tabName)) {
+                throw new IllegalStateException("tabName of tabMap can not be null ,tabMap:" + tabMap);
+            }
+            return tabName;
         }
 
         public final List<IColMetaGetter> getCols() {
@@ -231,7 +250,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
 
                     @Override
                     public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> bitType(DataType type) {
-                        return Pair.of(new BinaryType(type.getColumnSize()), Column::asBytes);
+                        return Pair.of(new BinaryType(1), Column::asBytes);
                     }
 
                     @Override
@@ -286,14 +305,25 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
             return true;
         }
 
-//        public boolean validatePartitionRetainNum(IFieldErrorHandler msgHandler, Context context, String fieldName, String value) {
-//            Integer retainNum = Integer.parseInt(value);
-//            if (retainNum < 1 || retainNum > 5) {
-//                msgHandler.addFieldError(context, fieldName, "数目必须为不小于1且不大于5之间");
-//                return false;
-//            }
-//            return true;
-//        }
+        @Override
+        public boolean isSupportIncr() {
+            return true;
+        }
+
+        public boolean validateTableBucket(IFieldErrorHandler msgHandler, Context context, String fieldName, String value) {
+            Integer bucket = Integer.valueOf(value);
+            if (bucket < 1) {
+                switch (bucket) {
+                    case -2:
+                    case -1:
+                        return true;
+                    default:
+                        msgHandler.addFieldError(context, fieldName, "必须为-2，-1或大于0的整数");
+                        return false;
+                }
+            }
+            return true;
+        }
 
         @Override
         public EndType getEndType() {

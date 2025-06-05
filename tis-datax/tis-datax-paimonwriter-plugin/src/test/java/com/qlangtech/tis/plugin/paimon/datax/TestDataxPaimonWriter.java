@@ -13,6 +13,7 @@ import com.qlangtech.tis.datax.impl.DataXCfgGenerator;
 import com.qlangtech.tis.plugin.common.PluginDesc;
 import com.qlangtech.tis.plugin.datax.test.TestSelectedTabs;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.PaimonFSDataXContext;
+import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import com.qlangtech.tis.trigger.util.JsonUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.easymock.EasyMock;
@@ -42,9 +43,9 @@ public class TestDataxPaimonWriter {
     public void testTemplateGenerate() throws Exception {
         //  PluginDesc.testDescGenerate(DataxPaimonWriter.class, "paimon-datax-writer-descriptor.json");
 
-        DataxPaimonWriter paimonWriter = new DataxPaimonWriter();
-        paimonWriter.dataXName = "paimon_writer";
-        paimonWriter.template = DataxPaimonWriter.getDftTemplate();
+        DataxPaimonWriter paimonWriter = PaimonTestUtils.getPaimonWriter();
+//        paimonWriter.dataXName = "paimon_writer";
+//        paimonWriter.template = DataxPaimonWriter.getDftTemplate();
 
         validateConfigGenerate("paimon-datax-writer-assert.json", paimonWriter);
     }

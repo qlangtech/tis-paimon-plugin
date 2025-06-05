@@ -101,7 +101,7 @@ public class PaimonWriter extends Writer {
         public void init() {
             IJobContainerContext context = Objects.requireNonNull(this.containerContext);
             IDataxProcessor processor = DataxProcessor.load(null, context.getCollectionName());
-            DataxPaimonWriter paimonWriter = (DataxPaimonWriter) processor.getWriter(null);
+            paimonWriter = (DataxPaimonWriter) processor.getWriter(null);
             IDataxReader reader = processor.getReader(null);
             //获取与本task相关的配置
             this.sliceConfig = super.getPluginJobConf();
@@ -231,7 +231,8 @@ public class PaimonWriter extends Writer {
                     schemaBuilder.option(each, paimonParamsAsJsonObject.getString(each));
                 }
             }
-            this.paimonWriter.initializeSchemaBuilder(schemaBuilder);
+            Objects.requireNonNull(this.paimonWriter, "paimonWriter can not be null")
+                    .initializeSchemaBuilder(schemaBuilder);
 
             for (PaimonColumn columnConfig : cols) {
 //                String columnName = columnConfig.getString("name");

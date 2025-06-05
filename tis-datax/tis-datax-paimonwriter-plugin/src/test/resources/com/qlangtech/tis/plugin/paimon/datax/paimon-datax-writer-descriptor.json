@@ -2,24 +2,337 @@
   "com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter":{
     "attrs":[
       {
-        "describable":false,
-        "eprops":{
-          "creator":{
-            "assistType":"dbQuickManager",
-            "label":"配置",
-            "plugin":[
+        "describable":true,
+        "descriptors":{
+          "com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog":{
+            "attrs":[
               {
-                "descName":"Hiveserver2",
-                "extraParam":"type_detailed,update_false,disableBizStore_true",
-                "hetero":"datasource"
+                "describable":false,
+                "eprops":{
+                  "creator":{
+                    "assistType":"dbQuickManager",
+                    "label":"配置",
+                    "plugin":[
+                      {
+                        "descName":"Hiveserver2",
+                        "extraParam":"type_detailed,update_false,disableBizStore_true",
+                        "hetero":"datasource"
+                      }
+                    ]
+                  },
+                  "label":"hiveserver2"
+                },
+                "key":"dbName",
+                "ord":0,
+                "pk":false,
+                "required":true,
+                "type":5
+              },
+              {
+                "describable":false,
+                "key":"tableOwner",
+                "ord":1,
+                "pk":false,
+                "required":true,
+                "type":1
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "creator":{
+                    "assistType":"paramCfg",
+                    "label":"管理",
+                    "plugin":[
+                      {
+                        "descName":"HDFS",
+                        "hetero":"fs"
+                      },
+                      {
+                        "descName":"Aliyun-Jindo-HDFS",
+                        "hetero":"fs"
+                      }
+                    ]
+                  },
+                  "help":"描述：Hadoop hdfs文件系统namenode节点地址。格式：hdfs://ip:端口；例如：hdfs://127.0.0.1:9000"
+                },
+                "key":"fsName",
+                "options":[
+                  {
+                    "impl":"com.qlangtech.tis.hdfs.impl.HdfsFileSystemFactory",
+                    "name":"hdfs200"
+                  }
+                ],
+                "ord":1,
+                "pk":false,
+                "required":true,
+                "type":6
+              },
+              {
+                "advance":true,
+                "describable":true,
+                "descriptors":{
+                  "com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF":{
+                    "attrs":[
+
+                    ],
+                    "containAdvance":false,
+                    "displayName":"off",
+                    "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+                    "extractProps":{
+
+                    },
+                    "impl":"com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF",
+                    "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloglockcataloglockoff",
+                    "veriflable":false
+                  },
+                  "com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockON":{
+                    "attrs":[
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "enum":[
+                            {
+                              "label":"hive",
+                              "val":"hive"
+                            },
+                            {
+                              "label":"zookeeper",
+                              "val":"zookeeper"
+                            }
+                          ]
+                        },
+                        "key":"type",
+                        "ord":0,
+                        "pk":false,
+                        "required":false,
+                        "type":5
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":8,
+                          "label":"check-max-sleep",
+                          "unit":"Second"
+                        },
+                        "key":"checkMaxSleep",
+                        "ord":1,
+                        "pk":false,
+                        "required":true,
+                        "type":12
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":8,
+                          "label":"acquire-timeout",
+                          "unit":"Minute"
+                        },
+                        "key":"acquireTimeout",
+                        "ord":2,
+                        "pk":false,
+                        "required":true,
+                        "type":12
+                      }
+                    ],
+                    "containAdvance":false,
+                    "displayName":"on",
+                    "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+                    "extractProps":{
+
+                    },
+                    "impl":"com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockON",
+                    "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloglockcataloglockon",
+                    "veriflable":false
+                  }
+                },
+                "eprops":{
+                  "dftVal":"off",
+                  "help":"Enable Catalog Lock.",
+                  "label":"Lock"
+                },
+                "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogLock",
+                "extensible":false,
+                "key":"catalogLock",
+                "ord":2,
+                "pk":false,
+                "required":true,
+                "type":1
+              },
+              {
+                "advance":true,
+                "describable":true,
+                "descriptors":{
+                  "com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheOFF":{
+                    "attrs":[
+
+                    ],
+                    "containAdvance":false,
+                    "displayName":"off",
+                    "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+                    "extractProps":{
+
+                    },
+                    "impl":"com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheOFF",
+                    "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncatalogcachecatalogcacheoff",
+                    "veriflable":false
+                  },
+                  "com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON":{
+                    "attrs":[
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":10,
+                          "label":"expiration-interval",
+                          "unit":"Minute"
+                        },
+                        "key":"expirationInterval",
+                        "ord":1,
+                        "pk":false,
+                        "required":true,
+                        "type":12
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":0,
+                          "label":"partition.max-num"
+                        },
+                        "key":"partitionMaxNum",
+                        "ord":2,
+                        "pk":false,
+                        "required":true,
+                        "type":4
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":128,
+                          "label":"manifest.small-file-memory",
+                          "unit":"MB"
+                        },
+                        "key":"manifestSmallFileMemory",
+                        "ord":3,
+                        "pk":false,
+                        "required":true,
+                        "type":12
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":1,
+                          "label":"manifest.small-file-threshold",
+                          "unit":"MB"
+                        },
+                        "key":"manifestSmallFileThreshold",
+                        "ord":4,
+                        "pk":false,
+                        "required":true,
+                        "type":12
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "label":"manifest.max-memory",
+                          "unit":"MB"
+                        },
+                        "key":"manifestMaxMemory",
+                        "ord":5,
+                        "pk":false,
+                        "required":false,
+                        "type":12
+                      },
+                      {
+                        "describable":false,
+                        "eprops":{
+                          "asyncHelp":true,
+                          "dftVal":20,
+                          "label":"snapshot.max-num-per-table"
+                        },
+                        "key":"snapshotMaxNumPerTable",
+                        "ord":6,
+                        "pk":false,
+                        "required":true,
+                        "type":4
+                      }
+                    ],
+                    "containAdvance":false,
+                    "displayName":"on",
+                    "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+                    "extractProps":{
+
+                    },
+                    "impl":"com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON",
+                    "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncatalogcachecatalogcacheon",
+                    "veriflable":false
+                  }
+                },
+                "eprops":{
+                  "dftVal":"off",
+                  "help":"Controls whether the catalog will cache databases, tables, manifests and partitions.",
+                  "label":"Cache"
+                },
+                "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.CatalogCache",
+                "extensible":false,
+                "key":"catalogCache",
+                "ord":3,
+                "pk":false,
+                "required":true,
+                "type":1
               }
             ],
-            "routerLink":"/offline/ds"
-          },
-          "label":"hiveserver2"
+            "containAdvance":true,
+            "displayName":"Hive",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog",
+            "extractProps":{
+
+            },
+            "impl":"com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimoncataloghivecatalog",
+            "veriflable":false
+          }
         },
-        "key":"dbName",
-        "ord":0,
+        "eprops":{
+          "dftVal":"Hive"
+        },
+        "extendPoint":"com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog",
+        "extensible":false,
+        "key":"catalog",
+        "ord":1,
+        "pk":false,
+        "required":true,
+        "type":1
+      },
+      {
+        "describable":false,
+        "eprops":{
+          "asyncHelp":true,
+          "dftVal":"parquet",
+          "enum":[
+            {
+              "label":"orc",
+              "val":"orc"
+            },
+            {
+              "label":"avro",
+              "val":"avro"
+            },
+            {
+              "label":"parquet",
+              "val":"parquet"
+            }
+          ],
+          "label":"file.format"
+        },
+        "key":"storeFormat",
+        "ord":6,
         "pk":false,
         "required":true,
         "type":5
@@ -32,7 +345,7 @@
           "label":"bucket"
         },
         "key":"tableBucket",
-        "ord":1,
+        "ord":7,
         "pk":false,
         "required":true,
         "type":4
@@ -40,21 +353,21 @@
       {
         "describable":true,
         "descriptors":{
-          "com.qlangtech.tis.plugin.paimon.datax.utils.BatchInsertWriteMode":{
+          "com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode":{
             "attrs":[
 
             ],
             "containAdvance":false,
-            "displayName":"BatchInsertWriteMode",
-            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.WriteMode",
+            "displayName":"Batch",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode",
             "extractProps":{
 
             },
-            "impl":"com.qlangtech.tis.plugin.paimon.datax.utils.BatchInsertWriteMode",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxutilsbatchinsertwritemode",
+            "impl":"com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxwritemodebatchinsertwritemode",
             "veriflable":false
           },
-          "com.qlangtech.tis.plugin.paimon.datax.utils.StreamInsertWriteMode":{
+          "com.qlangtech.tis.plugin.paimon.datax.writemode.StreamInsertWriteMode":{
             "attrs":[
               {
                 "describable":false,
@@ -66,34 +379,24 @@
               }
             ],
             "containAdvance":false,
-            "displayName":"StreamInsertWriteMode",
-            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.WriteMode",
+            "displayName":"Stream",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode",
             "extractProps":{
 
             },
-            "impl":"com.qlangtech.tis.plugin.paimon.datax.utils.StreamInsertWriteMode",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxutilsstreaminsertwritemode",
+            "impl":"com.qlangtech.tis.plugin.paimon.datax.writemode.StreamInsertWriteMode",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxwritemodestreaminsertwritemode",
             "veriflable":false
           }
         },
         "eprops":{
-          "asyncHelp":true,
-          "dftVal":"append",
-          "enum":[
-            {
-              "label":"Append",
-              "val":"append"
-            },
-            {
-              "label":"NonConflict",
-              "val":"nonConflict"
-            }
-          ]
+          "dftVal":"Batch",
+          "label":"writeMode"
         },
-        "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.WriteMode",
+        "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode",
         "extensible":false,
-        "key":"writeMode",
-        "ord":2,
+        "key":"paimonWriteMode",
+        "ord":11,
         "pk":false,
         "required":true,
         "type":1
@@ -101,10 +404,15 @@
       {
         "describable":true,
         "descriptors":{
-          "com.qlangtech.tis.plugin.paimon.datax.utils.PaimonCompaction":{
+          "com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction":{
             "attrs":[
               {
                 "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":5,
+                  "label":"min.file-num"
+                },
                 "key":"minFileNum",
                 "ord":1,
                 "pk":false,
@@ -113,14 +421,11 @@
               },
               {
                 "describable":false,
-                "key":"maxFileNum",
-                "ord":2,
-                "pk":false,
-                "required":true,
-                "type":4
-              },
-              {
-                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":200,
+                  "label":"放大比例"
+                },
                 "key":"sizeAmplificationPercent",
                 "ord":3,
                 "pk":false,
@@ -129,62 +434,54 @@
               },
               {
                 "describable":false,
-                "key":"asyncEnabled",
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":1,
+                  "label":"size-ratio"
+                },
+                "key":"sizeRatio",
                 "ord":4,
                 "pk":false,
                 "required":true,
-                "type":5
+                "type":4
+              },
+              {
+                "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":2,
+                  "label":"optimization-interval",
+                  "unit":"Minute"
+                },
+                "key":"optimizationInterval",
+                "ord":6,
+                "pk":false,
+                "required":false,
+                "type":12
               }
             ],
             "containAdvance":false,
-            "displayName":"PaimonCompaction",
-            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonCompaction",
+            "displayName":"default",
+            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction",
             "extractProps":{
 
             },
-            "impl":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonCompaction",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxutilspaimoncompaction",
+            "impl":"com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction",
+            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxcompactpaimoncompaction",
             "veriflable":false
           }
         },
-        "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonCompaction",
+        "eprops":{
+          "asyncHelp":true,
+          "dftVal":"default"
+        },
+        "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction",
         "extensible":false,
         "key":"compaction",
-        "ord":5,
+        "ord":16,
         "pk":false,
         "required":true,
         "type":1
-      },
-      {
-        "describable":false,
-        "eprops":{
-          "creator":{
-            "assistType":"paramCfg",
-            "label":"管理",
-            "plugin":[
-              {
-                "descName":"HDFS",
-                "hetero":"fs"
-              },
-              {
-                "descName":"Aliyun-Jindo-HDFS",
-                "hetero":"fs"
-              }
-            ]
-          },
-          "help":"描述：Hadoop hdfs文件系统namenode节点地址。格式：hdfs://ip:端口；例如：hdfs://127.0.0.1:9000"
-        },
-        "key":"fsName",
-        "options":[
-          {
-            "impl":"com.qlangtech.tis.hdfs.impl.HdfsFileSystemFactory",
-            "name":"hdfs200"
-          }
-        ],
-        "ord":5,
-        "pk":false,
-        "required":true,
-        "type":6
       },
       {
         "describable":true,
@@ -193,6 +490,11 @@
             "attrs":[
               {
                 "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":10,
+                  "label":"num-retained.min"
+                },
                 "key":"retainedMin",
                 "ord":1,
                 "pk":false,
@@ -201,6 +503,11 @@
               },
               {
                 "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":2147483647,
+                  "label":"num-retained.max"
+                },
                 "key":"retainedMax",
                 "ord":2,
                 "pk":false,
@@ -209,15 +516,21 @@
               },
               {
                 "describable":false,
+                "eprops":{
+                  "asyncHelp":true,
+                  "dftVal":1,
+                  "label":"time-retained",
+                  "unit":"Hour"
+                },
                 "key":"timeRetained",
                 "ord":3,
                 "pk":false,
                 "required":true,
-                "type":4
+                "type":12
               }
             ],
             "containAdvance":false,
-            "displayName":"PaimonSnapshot",
+            "displayName":"default",
             "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot",
             "extractProps":{
 
@@ -227,120 +540,14 @@
             "veriflable":false
           }
         },
+        "eprops":{
+          "asyncHelp":true,
+          "dftVal":"default"
+        },
         "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot",
         "extensible":false,
         "key":"snapshot",
-        "ord":8,
-        "pk":false,
-        "required":true,
-        "type":1
-      },
-      {
-        "describable":true,
-        "descriptors":{
-          "com.qlangtech.tis.hive.impl.OrcFSFormat":{
-            "attrs":[
-
-            ],
-            "containAdvance":false,
-            "displayName":"ORC",
-            "extendPoint":"com.qlangtech.tis.plugin.datax.FSFormat",
-            "extractProps":{
-
-            },
-            "impl":"com.qlangtech.tis.hive.impl.OrcFSFormat",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtishiveimplorcfsformat",
-            "veriflable":false
-          },
-          "com.qlangtech.tis.hive.impl.ParquetFSFormat":{
-            "attrs":[
-
-            ],
-            "containAdvance":false,
-            "displayName":"PARQUET",
-            "extendPoint":"com.qlangtech.tis.plugin.datax.FSFormat",
-            "extractProps":{
-
-            },
-            "impl":"com.qlangtech.tis.hive.impl.ParquetFSFormat",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtishiveimplparquetfsformat",
-            "veriflable":false
-          },
-          "com.qlangtech.tis.plugin.datax.impl.TextFSFormat":{
-            "attrs":[
-              {
-                "describable":false,
-                "eprops":{
-                  "dftVal":"char001",
-                  "help":"描述：读取的字段分隔符，可以用'\\t','\\001'等字符 ",
-                  "label":"列分割符"
-                },
-                "key":"fieldDelimiter",
-                "ord":20,
-                "pk":false,
-                "required":true,
-                "type":5
-              }
-            ],
-            "containAdvance":false,
-            "displayName":"TEXT",
-            "extendPoint":"com.qlangtech.tis.plugin.datax.FSFormat",
-            "extractProps":{
-
-            },
-            "impl":"com.qlangtech.tis.plugin.datax.impl.TextFSFormat",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtisplugindataximpltextfsformat",
-            "veriflable":false
-          }
-        },
-        "eprops":{
-          "help":"描述：文件的类型，目前只支持用户配置为\"text\"或\"orc\" "
-        },
-        "extendPoint":"com.qlangtech.tis.plugin.datax.FSFormat",
-        "extensible":true,
-        "key":"fileType",
-        "ord":10,
-        "pk":false,
-        "required":true,
-        "type":1
-      },
-      {
-        "describable":true,
-        "descriptors":{
-          "com.qlangtech.tis.plugin.paimon.datax.utils.PaimonHiveCfg":{
-            "attrs":[
-              {
-                "describable":false,
-                "key":"tableOwner",
-                "ord":1,
-                "pk":false,
-                "required":true,
-                "type":1
-              },
-              {
-                "describable":false,
-                "key":"storeFormat",
-                "ord":2,
-                "pk":false,
-                "required":true,
-                "type":5
-              }
-            ],
-            "containAdvance":false,
-            "displayName":"PaimonHiveCfg",
-            "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonHiveCfg",
-            "extractProps":{
-
-            },
-            "impl":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonHiveCfg",
-            "implUrl":"http://tis.pub/docs/plugin/plugins/#comqlangtechtispluginpaimondataxutilspaimonhivecfg",
-            "veriflable":false
-          }
-        },
-        "extendPoint":"com.qlangtech.tis.plugin.paimon.datax.utils.PaimonHiveCfg",
-        "extensible":false,
-        "key":"hiveCfg",
-        "ord":12,
+        "ord":18,
         "pk":false,
         "required":true,
         "type":1
@@ -356,56 +563,13 @@
           "style":"codemirror"
         },
         "key":"template",
-        "ord":15,
+        "ord":22,
         "pk":false,
         "required":true,
         "type":2
-      },
-      {
-        "describable":false,
-        "eprops":{
-          "dftVal":"NONE",
-          "enum":[
-            {
-              "label":"Gzip",
-              "val":"gzip"
-            },
-            {
-              "label":"Bzip2",
-              "val":"bzip2"
-            },
-            {
-              "label":"NONE",
-              "val":"NONE"
-            },
-            {
-              "label":"SNAPPY",
-              "val":"SNAPPY"
-            }
-          ],
-          "help":"描述：hdfs文件压缩类型，默认不填写意味着没有压缩。其中：text类型文件支持压缩类型有gzip、bzip2;orc类型文件支持的压缩类型有NONE、SNAPPY（需要用户安装SnappyCodec）。 "
-        },
-        "key":"compress",
-        "ord":25,
-        "pk":false,
-        "required":false,
-        "type":5
-      },
-      {
-        "advance":true,
-        "describable":false,
-        "eprops":{
-          "dftVal":"utf-8",
-          "help":"描述：写文件的编码配置。"
-        },
-        "key":"encoding",
-        "ord":30,
-        "pk":false,
-        "required":false,
-        "type":5
       }
     ],
-    "containAdvance":true,
+    "containAdvance":false,
     "displayName":"Paimon",
     "extendPoint":"com.qlangtech.tis.datax.impl.DataxWriter",
     "extractProps":{
@@ -415,7 +579,7 @@
       "rdbms":false,
       "supportBatch":true,
       "supportIcon":true,
-      "supportIncr":false,
+      "supportIncr":true,
       "supportMultiTable":true
     },
     "impl":"com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter",

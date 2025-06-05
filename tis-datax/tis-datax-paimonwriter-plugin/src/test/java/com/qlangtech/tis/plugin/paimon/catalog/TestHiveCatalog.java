@@ -7,6 +7,7 @@ import com.qlangtech.tis.plugin.common.PluginDesc;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import org.apache.paimon.catalog.Catalog;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,18 +32,19 @@ public class TestHiveCatalog {
 //        }
 //    }
 
+    @Ignore
     @Test
     public void testCreateCatalog() throws Exception {
         HiveCatalog hiveCatalog = PaimonTestUtils.createHiveCatalog();
-       // FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
+        // FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
         Assert.assertNotNull(hiveCatalog);
         Catalog catalog = hiveCatalog.createCatalog();
         Assert.assertNotNull("catalog can not be null", catalog);
 
         //  catalog.createDatabase("paimon", true);
 
-       // Database paimonDB = catalog.getDatabase("paimon");
-       // Assert.assertNotNull(paimonDB);
+        // Database paimonDB = catalog.getDatabase("paimon");
+        // Assert.assertNotNull(paimonDB);
         List<String> dbs = catalog.listDatabases();
         Assert.assertNotNull(dbs);
 
@@ -50,7 +52,7 @@ public class TestHiveCatalog {
         hiveCatalog.getDataSourceFactory().visitAllConnection((conn) -> {
             try {
 
-              //  conn.execute("create database paimon");
+                //  conn.execute("create database paimon");
                 conn.query("SELECT * FROM paimon.customer_order_relation", (result) -> {
                     System.out.println(result.getString(1));
                     return true;

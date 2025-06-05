@@ -5,6 +5,7 @@ import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
+import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
@@ -15,6 +16,7 @@ import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.schema.Schema;
 
+import java.time.Duration;
 import java.util.function.Function;
 
 /**
@@ -52,8 +54,8 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
     /**
      * compaction 间隔时间，单位：秒
      */
-    @FormField(ordinal = 6, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
-    public Integer optimizationInterval;
+    @FormField(ordinal = 6, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.integer})
+    public Duration optimizationInterval;
 
     @Override
     public void initializeSchemaBuilder(Schema.Builder schemaBuilder) {
@@ -62,7 +64,6 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
             schemaBuilder.option(field.key(), String.valueOf(val));
         }, this);
     }
-
 
 
     @TISExtension
@@ -79,11 +80,15 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
             };
             opts = PaimonPropAssist.createOpts(this);
             opts.add("minFileNum", TISAssistProp.create(CoreOptions.COMPACTION_MIN_FILE_NUM).overwriteLabel(dftLableRewrite));
-           // opts.add("maxFileNum", TISAssistProp.create(CoreOptions.COMPACTION_MAX_FILE_NUM).overwriteLabel(dftLableRewrite));
+            // opts.add("maxFileNum", TISAssistProp.create(CoreOptions.COMPACTION_MAX_FILE_NUM).overwriteLabel(dftLableRewrite));
 
             opts.add("sizeAmplificationPercent", TISAssistProp.create(CoreOptions.COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT).overwriteLabel("放大比例"));
             opts.add("sizeRatio", TISAssistProp.create(CoreOptions.COMPACTION_SIZE_RATIO).overwriteLabel(dftLableRewrite));
-            opts.add("optimizationInterval", TISAssistProp.create(CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL).overwriteLabel(dftLableRewrite));
+            OverwriteProps optimizationIntervalOverwrite = new OverwriteProps();
+            optimizationIntervalOverwrite.labelRewrite = dftLableRewrite;
+            optimizationIntervalOverwrite.setAppendHelper("compaction.optimization-interval 的核心是平衡后台优化开销和数据查询/管理效率。1 分钟是安全的默认起点。 最佳值需要通过仔细监控你的特定工作负载在特定环境下的表现（资源使用、文件状态、查询延迟、写入稳定性）来确定。优先解决已观察到的瓶颈（资源争用或小文件堆积），然后进行有针对性的调整。记住，它需要与 compaction.max.file-num 和 compaction.early.max.file-num 等参数协同工作。");
+            optimizationIntervalOverwrite.setDftVal(Duration.ofMinutes(2));
+            opts.add("optimizationInterval", TISAssistProp.create(CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL).setOverwriteProp(optimizationIntervalOverwrite));
         }
 
         @Override

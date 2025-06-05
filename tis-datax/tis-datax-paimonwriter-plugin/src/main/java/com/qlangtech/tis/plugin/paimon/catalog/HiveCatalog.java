@@ -116,6 +116,7 @@ public class HiveCatalog extends PaimonCatalog {
         }
 
         this.catalogLock.setOptions(options);
+        this.catalogCache.setOptions(options);
 
 //        /**
 //         * 1：通过配置hadoop-conf-dir(目录中必须包含hive-site.xml,core-site.xml文件)来创建catalog

@@ -5,12 +5,18 @@
   "writeMode": {
     "disable": true
   },
+  "compaction": {
+    "dftVal": "default"
+  },
+  "snapshot": {
+    "dftVal": "default"
+  },
   "paimonWriteMode": {
     "label": "writeMode",
     "dftVal": "Batch"
   },
   "catalog": {
-    "dftVal": "HiveMetaStore"
+    "dftVal": "Hive"
   },
   "fileType": {
     "disable": true

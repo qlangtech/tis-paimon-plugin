@@ -16,6 +16,7 @@ import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.schema.Schema.Builder;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -45,13 +46,13 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
     /**
      * @see org.apache.paimon.CoreOptions#SNAPSHOT_TIME_RETAINED
      */
-    @FormField(ordinal = 3, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
-    public Integer timeRetained;
+    @FormField(ordinal = 3, type = FormFieldType.DURATION_OF_HOUR, validate = {Validator.require, Validator.integer})
+    public Duration timeRetained;
 
     @Override
     public void initializeSchemaBuilder(Builder schemaBuilder) {
         DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
-        desc.opts.setTarget((field, val) -> {
+        Objects.requireNonNull(desc, "desc can not be null").opts.setTarget((field, val) -> {
             schemaBuilder.option(field.key(), String.valueOf(val));
         }, this);
     }
@@ -62,7 +63,7 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
 
         public DefaultDescriptor() {
             super();
-            Options<PaimonSnapshot, ConfigOption> opts = PaimonPropAssist.createOpts(this);
+            this.opts = PaimonPropAssist.createOpts(this);
             Function<String, String> labelRewriter = (label) -> StringUtils.substringAfter(label, "snapshot.");
             OverwriteProps overwriteProps = new OverwriteProps();
             overwriteProps.setLabelRewrite(labelRewriter);
@@ -72,10 +73,10 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
             opts.addFieldDescriptor("retainedMax", CoreOptions.SNAPSHOT_NUM_RETAINED_MAX, overwriteProps);
 
             OverwriteProps labelProp = OverwriteProps.withAppendHelper("unit：hour").setLabelRewrite(labelRewriter);
-            labelProp.dftValConvert = (val) -> {
-                Duration dur = (Duration) val;
-                return dur.toHours();
-            };
+//            labelProp.dftValConvert = (val) -> {
+//                Duration dur = (Duration) val;
+//                return dur.toHours();
+//            };
             opts.addFieldDescriptor("timeRetained"
                     , CoreOptions.SNAPSHOT_TIME_RETAINED
                     , labelProp);

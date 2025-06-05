@@ -6,6 +6,7 @@ import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
+import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
@@ -27,10 +28,10 @@ public class CatalogLockON extends CatalogLock {
 
     @FormField(ordinal = 0, type = FormFieldType.ENUM, validate = {})
     public String type;
-    @FormField(ordinal = 1, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
-    public Long checkMaxSleep;
-    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
-    public Long acquireTimeout;
+    @FormField(ordinal = 1, type = FormFieldType.DURATION_OF_SECOND, validate = {Validator.require})
+    public Duration checkMaxSleep;
+    @FormField(ordinal = 2, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.require})
+    public Duration acquireTimeout;
 
     @Override
     public void setOptions(org.apache.paimon.options.Options options) {
@@ -62,29 +63,36 @@ public class CatalogLockON extends CatalogLock {
             opts.add("type", TISAssistProp.create(CatalogOptions.LOCK_TYPE).setOverwriteProp(overwriteType));
 
             OverwriteProps overwriteCheckMaxSleep = OverwriteProps.withAppendHelper("unit：Second").setLabelRewrite(dftLableRewrite);
-            overwriteCheckMaxSleep.dftValConvert = (val) -> {
-                Duration dur = (Duration) val;
-                return dur.toSeconds();
-            };
+//            overwriteCheckMaxSleep.dftValConvert = (val) -> {
+//                Duration dur = (Duration) val;
+//                return dur.toSeconds();
+//            };
 
             opts.add("checkMaxSleep"
                     , TISAssistProp.create(CatalogOptions.LOCK_CHECK_MAX_SLEEP).setOverwriteProp(overwriteCheckMaxSleep)
-                    , (lock) -> {
-                        Long val = ((CatalogLockON) lock).checkMaxSleep;
-                        return Duration.ofSeconds(val);
-                    });
+//                    , new PropValFilter() {
+//                        @Override
+//                        public Object apply(Object lock) {
+//                            Long val = ((CatalogLockON) lock).checkMaxSleep;
+//                            return Duration.ofSeconds(val);
+//                        }
+//                    }
+            );
 
             OverwriteProps overwriteAcquireTimeout = OverwriteProps.withAppendHelper("unit：Minute").setLabelRewrite(dftLableRewrite);
-            overwriteAcquireTimeout.dftValConvert = (val) -> {
-                Duration dur = (Duration) val;
-                return dur.toMinutes();
-            };
+//            overwriteAcquireTimeout.dftValConvert = (val) -> {
+//                Duration dur = (Duration) val;
+//                return dur.toMinutes();
+//            };
             opts.add("acquireTimeout"
                     , TISAssistProp.create(CatalogOptions.LOCK_ACQUIRE_TIMEOUT).setOverwriteProp(overwriteAcquireTimeout)
-                    , (lock) -> {
-                        Long val = ((CatalogLockON) lock).acquireTimeout;
-                        return Duration.ofMinutes(val);
-                    }
+//                    , new PropValFilter() {
+//                        @Override
+//                        public Object apply(Object lock) {
+//                            Long val = ((CatalogLockON) lock).acquireTimeout;
+//                            return Duration.ofMinutes(val);
+//                        }
+//                    }
             );
         }
     }

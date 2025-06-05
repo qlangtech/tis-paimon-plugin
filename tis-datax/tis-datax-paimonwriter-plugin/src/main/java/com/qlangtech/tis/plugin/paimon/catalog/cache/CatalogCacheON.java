@@ -4,19 +4,17 @@ import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
+import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.plugin.MemorySize;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.paimon.catalog.CatalogCache;
-import com.qlangtech.tis.plugin.paimon.catalog.CatalogLock;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
 import org.apache.commons.lang.StringUtils;
-import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.ConfigOption;
-
 import org.apache.paimon.options.Options;
 
 import java.time.Duration;
@@ -27,31 +25,33 @@ import java.util.function.Function;
  * @create: 2025-06-03 14:41
  **/
 public class CatalogCacheON extends CatalogCache {
-    @FormField(ordinal = 1, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.require})
+
+    public static final String KEY_FIELD_MANIFEST_SMALL_FIELD_MEMORY = "manifestSmallFileMemory";
+
+    @FormField(ordinal = 1, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.require, Validator.integer})
     public Duration expirationInterval;
 
-    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
+    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Long partitionMaxNum;
 
-    @FormField(ordinal = 3, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require})
+    @FormField(ordinal = 3, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require, Validator.integer})
     public MemorySize manifestSmallFileMemory;
 
-    @FormField(ordinal = 4, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require})
+    @FormField(ordinal = 4, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require, Validator.integer})
     public MemorySize manifestSmallFileThreshold;
 
-    @FormField(ordinal = 5, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require})
+    @FormField(ordinal = 5, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.integer})
     public MemorySize manifestMaxMemory;
 
-    @FormField(ordinal = 6, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
+    @FormField(ordinal = 6, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer snapshotMaxNumPerTable;
 
     @Override
     public void setOptions(Options options) {
         options.set(CatalogOptions.CACHE_ENABLED, true);
-
         Desc desc = (Desc) this.getDescriptor();
         desc.opts.setTarget((field, val) -> {
-            options.set(field, String.valueOf(val));
+            options.set(field, (val));
         }, this);
     }
 
@@ -80,20 +80,27 @@ public class CatalogCacheON extends CatalogCache {
                 }
             };
 
-            this.opts.add("manifestSmallFileMemory"
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_MEMORY).overwriteLabel(dftLableRewrite)
+            OverwriteProps memoryOverwrite = new OverwriteProps();
+            memoryOverwrite.setLabelRewrite(dftLableRewrite);
+            memoryOverwrite.dftValConvert = (val) -> {
+                return MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
+            };
+
+            this.opts.add(KEY_FIELD_MANIFEST_SMALL_FIELD_MEMORY
+                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_MEMORY).setOverwriteProp(memoryOverwrite)
                     , paimonMemorySizeProcess);
 
             this.opts.add("manifestSmallFileThreshold"
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_THRESHOLD).overwriteLabel(dftLableRewrite)
+                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_THRESHOLD).setOverwriteProp(memoryOverwrite)
                     , paimonMemorySizeProcess);
 
             this.opts.add("manifestMaxMemory"
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_MAX_MEMORY).overwriteLabel(dftLableRewrite)
+                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_MAX_MEMORY).setOverwriteProp(memoryOverwrite)
                     , paimonMemorySizeProcess);
 
             this.opts.add("snapshotMaxNumPerTable"
                     , TISAssistProp.create(CatalogOptions.CACHE_SNAPSHOT_MAX_NUM_PER_TABLE).overwriteLabel(dftLableRewrite));
+
         }
 
         @Override

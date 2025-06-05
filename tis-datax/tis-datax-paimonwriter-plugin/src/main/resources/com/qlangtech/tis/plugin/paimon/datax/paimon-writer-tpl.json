@@ -3,7 +3,7 @@
   "parameter": {
   "tableName": "$writer.tableName",
   "sourceTableName": "$writer.sourceTableName",
-  "databaseName": "paimon",
+  "databaseName": "$writer.databaseName",
   "column": [
     #foreach($col in $writer.paimonCols  )
     {
