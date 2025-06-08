@@ -149,7 +149,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     }
 
     public Catalog createCatalog() {
-        return this.catalog.createCatalog();
+        return this.catalog.createCatalog(this.dataXName);
     }
 
     public PaimonTableWriter createWriter(Table table) {
@@ -286,11 +286,11 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         public DefaultDescriptor() {
             super();
             opts = PaimonPropAssist.createOpts(this);
-            opts.addFieldDescriptor("tableBucket", CoreOptions.BUCKET);
+            opts.add("tableBucket", CoreOptions.BUCKET);
             OverwriteProps fileFormatOverwriteProps = new OverwriteProps();
             fileFormatOverwriteProps.setEnumOpts(
                     Lists.newArrayList(new Option(FILE_FORMAT_ORC), new Option(FILE_FORMAT_AVRO), new Option(FILE_FORMAT_PARQUET)));
-            opts.addFieldDescriptor("storeFormat", CoreOptions.FILE_FORMAT, fileFormatOverwriteProps);
+            opts.add("storeFormat", CoreOptions.FILE_FORMAT, fileFormatOverwriteProps);
         }
 
         @Override

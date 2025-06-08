@@ -69,15 +69,15 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
             overwriteProps.setLabelRewrite(labelRewriter);
 
 
-            opts.addFieldDescriptor("retainedMin", CoreOptions.SNAPSHOT_NUM_RETAINED_MIN, overwriteProps);
-            opts.addFieldDescriptor("retainedMax", CoreOptions.SNAPSHOT_NUM_RETAINED_MAX, overwriteProps);
+            opts.add("retainedMin", CoreOptions.SNAPSHOT_NUM_RETAINED_MIN, overwriteProps);
+            opts.add("retainedMax", CoreOptions.SNAPSHOT_NUM_RETAINED_MAX, overwriteProps);
 
             OverwriteProps labelProp = OverwriteProps.withAppendHelper("unit：hour").setLabelRewrite(labelRewriter);
 //            labelProp.dftValConvert = (val) -> {
 //                Duration dur = (Duration) val;
 //                return dur.toHours();
 //            };
-            opts.addFieldDescriptor("timeRetained"
+            opts.add("timeRetained"
                     , CoreOptions.SNAPSHOT_TIME_RETAINED
                     , labelProp);
         }

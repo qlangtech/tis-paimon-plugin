@@ -16,11 +16,14 @@ import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.PaimonFSDataXCont
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import com.qlangtech.tis.trigger.util.JsonUtil;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.paimon.schema.Schema;
+import org.apache.paimon.schema.Schema.Builder;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -37,6 +40,15 @@ public class TestDataxPaimonWriter {
         PluginDesc.testDescGenerate(DataxPaimonWriter.class, "paimon-datax-writer-descriptor.json");
     }
 
+    @Test
+    public void testInitializeSchemaBuilder() {
+        DataxPaimonWriter paimonWriter = PaimonTestUtils.getPaimonWriter();
+        Schema.Builder tabSchemaBuilder = new Schema.Builder();
+        paimonWriter.initializeSchemaBuilder(tabSchemaBuilder);
+        Schema schema = tabSchemaBuilder.build();
+        Map<String, String> options = schema.options();
+        Assert.assertEquals(8, options.size());
+    }
 
 
     @Test
@@ -83,7 +95,7 @@ public class TestDataxPaimonWriter {
                 .andReturn(Pair.of(Lists.newArrayList(), null));
         EasyMock.expect(processor.getTabAlias(null)).andReturn(TableAliasMapper.Null);
         EasyMock.expect(processor.isReaderUnStructed(null)).andReturn(false);
-       // EasyMock.expect(processor.getReader(null)).andReturn(dataxReader);
+        // EasyMock.expect(processor.getReader(null)).andReturn(dataxReader);
         EasyMock.expect(processor.getWriter(null)).andReturn(paimonWriter);
         EasyMock.expect(processor.getDataXGlobalCfg()).andReturn(dataxGlobalCfg);
         EasyMock.replay(processor, readerContext, dataxGlobalCfg, dataxReader);

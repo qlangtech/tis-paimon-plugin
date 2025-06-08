@@ -1,4 +1,4 @@
-package com.qlangtech.tis.plugins.incr.flink.pipeline.paimon.sink;
+package com.qlangtech.tis.plugin.paimon.catalog;
 
 import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.datax.impl.DataxWriter;
@@ -7,9 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
-import org.apache.paimon.hive.HiveCatalog;
 import org.apache.paimon.hive.HiveCatalogFactory;
-import org.apache.paimon.hive.HiveCatalogOptions;
 import org.apache.paimon.options.Options;
 
 /**
@@ -17,8 +15,6 @@ import org.apache.paimon.options.Options;
  * @create: 2025-05-29 13:51
  **/
 public class TISPaimonCatalogFactory extends HiveCatalogFactory {
-
-    public static final String IDENTIFIER = ("tis" + HiveCatalogOptions.IDENTIFIER);
 
     @Override
     public Catalog create(CatalogContext context) {
@@ -28,17 +24,19 @@ public class TISPaimonCatalogFactory extends HiveCatalogFactory {
         if (StringUtils.isEmpty(dataXName)) {
             throw new IllegalStateException("prop " + StoreResourceType.DATAX_NAME + " relevant val can not be null");
         }
+
         //  options
         DataxPaimonWriter paimonWriter
                 = (DataxPaimonWriter) DataxWriter.load(null, StoreResourceType.DataApp, dataXName, true);
+       // return paimonWriter.catalog.createCatalog();
         Configuration hadoopConf = paimonWriter.catalog.getConfiguration();
         CatalogContext catalogContext = CatalogContext.create(context.options(), hadoopConf);
-
-        return HiveCatalog.createHiveCatalog(catalogContext);
+//
+        return org.apache.paimon.hive.HiveCatalog.createHiveCatalog(catalogContext);
     }
 
     @Override
     public String identifier() {
-        return IDENTIFIER;
+        return com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog.HIVE_CATALOG_IDENTIFIER;
     }
 }

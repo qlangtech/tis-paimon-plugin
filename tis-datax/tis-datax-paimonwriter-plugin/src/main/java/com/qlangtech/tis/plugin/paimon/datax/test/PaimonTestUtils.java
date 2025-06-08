@@ -10,12 +10,15 @@ import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode;
 import org.apache.paimon.CoreOptions;
 
+import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
+
 /**
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-26 10:09
  **/
 public class PaimonTestUtils {
     public static final String KEY_HDFS200 = "hdfs200";
+    public static final String DATAX_PAIMON_NAME = "paimon_writer";
 
     public static DataxPaimonWriter getPaimonWriter() {
         //   DaMengDataSourceFactory dsFactory = TestDaMengDataSourceFactory.createDaMengDataSourceFactory();
@@ -26,7 +29,7 @@ public class PaimonTestUtils {
                 return DataxPaimonWriter.class;
             }
         };
-        writer.dataXName = "paimon_writer";
+        writer.dataXName = DATAX_PAIMON_NAME;
         writer.template = DataxPaimonWriter.getDftTemplate();
         HiveCatalog hiveCatalog = createHiveCatalog();
         writer.catalog = hiveCatalog;
@@ -34,6 +37,8 @@ public class PaimonTestUtils {
         // writer.fsName = KEY_HDFS200;
         writer.paimonWriteMode = writeMode;
         writer.tableBucket = 1;
+        writer.storeFormat = FILE_FORMAT_PARQUET;
+
         PaimonCompaction compaction = new PaimonCompaction();
         compaction.optimizationInterval = null;// CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL.defaultValue();
         compaction.sizeAmplificationPercent = org.apache.paimon.CoreOptions.COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT.defaultValue();

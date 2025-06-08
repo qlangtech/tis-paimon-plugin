@@ -65,13 +65,12 @@ public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
         IFlinkColCreator<FlinkCol> sourceFlinkColCreator
                 = Objects.requireNonNull(sourceListenerFactory, "sourceListenerFactory").createFlinkColCreator(reader);
 
-        sinkFuncs.put(TableAlias.create(DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS, DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS),
+        sinkFuncs.put(TableAlias.create(DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS
+                        , DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS),
                 new PipelineEventSinkFunc(dataxProcessor, this
                         , tabs
                         , sourceFlinkColCreator
                         , null
-                        // , supportUpsetDML()
-                        // , filterRowKinds
                         , this.parallelism)
         );
 

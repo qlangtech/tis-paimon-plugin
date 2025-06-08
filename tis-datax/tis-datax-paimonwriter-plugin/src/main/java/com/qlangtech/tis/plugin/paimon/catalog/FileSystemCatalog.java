@@ -22,7 +22,7 @@ public class FileSystemCatalog extends PaimonCatalog {
     }
 
     @Override
-    public Options createOpts() {
+    public Options createOpts(String pipelineName) {
         throw new UnsupportedOperationException();
     }
 
@@ -37,7 +37,7 @@ public class FileSystemCatalog extends PaimonCatalog {
     }
 
     @Override
-    public Catalog createCatalog() {
+    public Catalog createCatalog(String pipelineName) {
         CatalogContext context = CatalogContext.create(new org.apache.paimon.fs.Path(this.getRootDir()));
         return CatalogFactory.createCatalog(context);
     }

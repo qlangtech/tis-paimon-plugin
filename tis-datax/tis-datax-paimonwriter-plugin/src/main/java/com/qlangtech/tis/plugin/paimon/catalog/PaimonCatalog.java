@@ -55,7 +55,7 @@ public abstract class PaimonCatalog implements Describable<PaimonCatalog>, IRepo
         return fileSystem;
     }
 
-    public abstract org.apache.paimon.options.Options createOpts();
+    public abstract org.apache.paimon.options.Options createOpts(String pipelineName);
 
     @FormField(ordinal = 1, type = FormFieldType.INPUTTEXT, validate = {Validator.require, Validator.db_col_name})
     public String tableOwner;
@@ -64,7 +64,7 @@ public abstract class PaimonCatalog implements Describable<PaimonCatalog>, IRepo
 
     public abstract <T> T accept(PaimonCatalogVisitor<T> visitor);
 
-    public abstract Catalog createCatalog();
+    public abstract Catalog createCatalog(String pipelineName);
 
     public String getRootDir() {
         return this.getFs().getRootDir();

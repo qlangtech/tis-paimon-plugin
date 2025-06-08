@@ -14,8 +14,6 @@ import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalogVisitor;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugins.incr.flink.pipeline.paimon.sink.PaimonPipelineSinkFactory;
-import com.qlangtech.tis.plugins.incr.flink.pipeline.paimon.sink.TISPaimonCatalogFactory;
-import com.qlangtech.tis.realtime.BasicTISSinkFactory.RowDataSinkFunc;
 import com.qlangtech.tis.realtime.SelectedTableTransformerRules;
 import com.qlangtech.tis.realtime.TabSinkFunc;
 import com.qlangtech.tis.realtime.dto.DTOStream;
@@ -50,7 +48,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.data.RowData;
-import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema;
 import org.slf4j.Logger;
@@ -98,7 +95,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
         Optional<SelectedTableTransformerRules> transformerOpt = null;
         for (ISelectedTab selTab : this.tabs) {
 
-            transformerOpt = RowDataSinkFunc.createTransformerRules(dataxProcessor.identityValue()
+            transformerOpt = SelectedTableTransformerRules.createTransformerRules(dataxProcessor.identityValue()
                     , selTab
                     , Objects.requireNonNull(sourceFlinkColCreator, "sourceFlinkColCreator can not be null"));
 
@@ -136,25 +133,6 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
         }
 
         return result;
-//        if (transformers.isPresent()) {
-//            SelectedTableTransformerRules triple = transformers.get();
-//            List<FlinkCol> transformerColsWithoutContextParamsFlinkCol = triple.transformerColsWithoutContextParamsFlinkCol();
-//            LogicalType[] fieldDataTypes
-//                    = transformerColsWithoutContextParamsFlinkCol
-//                    .stream().map((colmeta) -> colmeta.type.getLogicalType()).toArray(LogicalType[]::new);
-//
-//            String[] colNames = transformerColsWithoutContextParamsFlinkCol
-//                    .stream().map((colmeta) -> colmeta.name).toArray(String[]::new);
-//            TypeInformation<Event> outputType = null; //InternalTypeInfo.of(RowType.of(fieldDataTypes, colNames));
-//            // = (TypeInformation<RowData>) TypeConversions.fromDataTypeToLegacyInfo(TypeConversions.fromLogicalToDataType(rowType));
-//
-//            logger.info("transformerColsWithoutContextParamsFlinkCol size:{},colNames:{}"
-//                    , transformerColsWithoutContextParamsFlinkCol.size(), String.join(",", colNames));
-//            return result.map(new PipelineEventTransformerMapper(triple, transformerColsWithoutContextParamsFlinkCol.size()), outputType)
-//                    .name(tab.getFrom() + "_transformer").setParallelism(this.sinkTaskParallelism);
-//        } else {
-//            return result;
-//        }
     }
 
     /**
@@ -247,7 +225,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
                     }
                 });
         // catalogOptions.put(StoreResourceType.DATAX_NAME, dataxProcessor.identityValue());
-        Options options = this.paimonWriter.catalog.createOpts();// Options.fromMap(catalogOptions);
+        Options options = this.paimonWriter.catalog.createOpts(dataxProcessor.identityValue());// Options.fromMap(catalogOptions);
         options.set(StoreResourceType.DATAX_NAME, dataxProcessor.identityValue());
         ZoneId zoneId = pipelineSinkFactory.getTimeZone();// ZoneId.systemDefault();
 
@@ -308,7 +286,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
 
             @Override
             public Void visit(HiveCatalog catalog) {
-                setMetaStore(TISPaimonCatalogFactory.IDENTIFIER);
+                setMetaStore(HiveCatalog.HIVE_CATALOG_IDENTIFIER);
                 setWarehouse(catalog);
                 IHiveConnGetter hiveConnGetter = catalog.getHiveConnGetter();
                 paramBuilder.put(PaimonDataSinkOptions.URI.key(), hiveConnGetter.getMetaStoreUrls());

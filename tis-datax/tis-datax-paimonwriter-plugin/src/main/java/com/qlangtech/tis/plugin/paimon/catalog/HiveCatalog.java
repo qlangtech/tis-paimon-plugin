@@ -2,6 +2,7 @@ package com.qlangtech.tis.plugin.paimon.catalog;
 
 import com.alibaba.datax.common.exception.DataXException;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
+import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.offline.FileSystemFactory;
 import com.qlangtech.tis.plugin.annotation.FormField;
@@ -13,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
 import org.apache.paimon.catalog.CatalogFactory;
+import org.apache.paimon.hive.HiveCatalogOptions;
 import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema.Builder;
@@ -31,6 +33,7 @@ import static com.alibaba.datax.plugin.writer.paimonwriter.PaimonWriterErrorCode
  **/
 public class HiveCatalog extends PaimonCatalog {
 
+    public static final String HIVE_CATALOG_IDENTIFIER = ("tis" + HiveCatalogOptions.IDENTIFIER);
     @FormField(identity = false, ordinal = 0, type = FormFieldType.ENUM, validate = {Validator.require})
     public String dbName;
 
@@ -40,8 +43,8 @@ public class HiveCatalog extends PaimonCatalog {
     }
 
     @Override
-    public Options createOpts() {
-        return createOptions(this.getHiveConnGetter(), this.getFs());
+    public Options createOpts(String pipelineName) {
+        return createOptions(pipelineName, this.getHiveConnGetter(), this.getFs());
     }
 
     @Override
@@ -56,12 +59,12 @@ public class HiveCatalog extends PaimonCatalog {
     }
 
     @Override
-    public Catalog createCatalog() {
+    public Catalog createCatalog(String pipelineName) {
 
 //        metastoreUri = sliceConfig.getString(PAIMON_METASTORE_URI);
 //        hiveConfDir = sliceConfig.getString(PAIMON_HIVE_CONF_DIR);
 //        hadoopConfDir = sliceConfig.getString(PAIMON_HADOOP_CONF_DIR);
-        return this.createHiveCatalog(this.getHiveConnGetter(), this.getFs());
+        return this.createHiveCatalog(pipelineName, this.getHiveConnGetter(), this.getFs());
     }
 
 
@@ -78,10 +81,10 @@ public class HiveCatalog extends PaimonCatalog {
         return BasicDataSourceFactory.getDs(this.dbName);
     }
 
-    private Catalog createHiveCatalog(IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
+    private Catalog createHiveCatalog(String pipelineName, IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
         // Paimon Hive catalog relies on Hive jars
         // You should add hive classpath or hive bundled jar.
-        Options options = createOptions(hiveConnGetter, fsFactory);
+        Options options = createOptions(pipelineName, hiveConnGetter, fsFactory);
 
         Configuration hadoopConfig = fsFactory.getConfiguration();
         CatalogContext context = CatalogContext.create(options, hadoopConfig);
@@ -90,14 +93,18 @@ public class HiveCatalog extends PaimonCatalog {
 
     }
 
-    private Options createOptions(IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
+    private Options createOptions(String pipelineName, IHiveConnGetter hiveConnGetter, FileSystemFactory fsFactory) {
+        if (StringUtils.isEmpty(pipelineName)) {
+            throw new IllegalArgumentException("param pipelineName can not be empty");
+        }
         Options options = new Options();
         //   context;
         if (StringUtils.isEmpty(Objects.requireNonNull(fsFactory, "fsFactory can not be null").getRootDir())) {
             throw new IllegalStateException("prop catalogPath can not be empty");
         }
+        options.set(StoreResourceType.DATAX_NAME, pipelineName);
         options.set(CatalogOptions.WAREHOUSE, fsFactory.getRootDir());
-        options.set(CatalogOptions.METASTORE, "hive");
+        options.set(CatalogOptions.METASTORE, HIVE_CATALOG_IDENTIFIER);
         //默认设置为外部表
         options.set(CatalogOptions.TABLE_TYPE, CatalogTableType.EXTERNAL);
 

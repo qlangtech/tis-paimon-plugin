@@ -34,9 +34,9 @@ public class TestHiveCatalog {
 
 
         HiveCatalog hiveCatalog = PaimonTestUtils.createHiveCatalog();
-      //  FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
+        //  FileSystemFactory fsFactory = FileSystemFactory.getFsFactory(PaimonTestUtils.KEY_HDFS200);
         Assert.assertNotNull(hiveCatalog);
-        Catalog catalog = hiveCatalog.createCatalog();
+        Catalog catalog = hiveCatalog.createCatalog(PaimonTestUtils.DATAX_PAIMON_NAME);
         Assert.assertNotNull("catalog can not be null", catalog);
 
         //  catalog.createDatabase("paimon", true);
