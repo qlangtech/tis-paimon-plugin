@@ -1,12 +1,12 @@
 package com.qlangtech.tis.plugin.paimon.catalog.lock;
 
-import com.beust.jcommander.internal.Lists;
+
+import com.google.common.collect.Lists;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
-import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
