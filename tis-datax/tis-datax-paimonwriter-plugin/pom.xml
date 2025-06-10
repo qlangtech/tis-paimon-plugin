@@ -30,11 +30,11 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>com.qlangtech.tis.plugins</groupId>
-            <artifactId>tis-datax-hdfs-plugin</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.qlangtech.tis.plugins</groupId>-->
+<!--            <artifactId>tis-datax-hdfs-plugin</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.qlangtech.tis.plugins</groupId>
@@ -56,6 +56,7 @@
             <groupId>com.alibaba.datax</groupId>
             <artifactId>datax-common</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-log4j12</artifactId>
@@ -70,6 +71,14 @@
             <version>${paimon.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-hive-connector-common</artifactId>
+            <version>${paimon.version}</version>
+        </dependency>
+
+
+
         <!--https://github.com/apache/paimon/blob/master/paimon-hive/paimon-hive-connector-2.3/pom.xml-->
 <!--        <dependency>-->
 <!--            <groupId>org.apache.paimon</groupId>-->
@@ -77,33 +86,33 @@
 <!--            <version>${paimon.version}</version>-->
 <!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-jdbc</artifactId>
-            <version>${hive.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>hadoop-common</artifactId>
-                    <groupId>org.apache.hadoop</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>hadoop-hdfs</artifactId>
-                    <groupId>org.apache.hadoop</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.hive</groupId>-->
+<!--            <artifactId>hive-jdbc</artifactId>-->
+<!--            <version>${hive.version}</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>hadoop-common</artifactId>-->
+<!--                    <groupId>org.apache.hadoop</groupId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>hadoop-hdfs</artifactId>-->
+<!--                    <groupId>org.apache.hadoop</groupId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libfb303</artifactId>
-            <version>${fb303.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.thrift</groupId>-->
+<!--            <artifactId>libfb303</artifactId>-->
+<!--            <version>${fb303.version}</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-            <version>${thrift.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.thrift</groupId>-->
+<!--            <artifactId>libthrift</artifactId>-->
+<!--            <version>${thrift.version}</version>-->
+<!--        </dependency>-->
 
         <!--        <dependency>-->
         <!--            <groupId>org.slf4j</groupId>-->
@@ -118,18 +127,18 @@
         <!--            <artifactId>guava</artifactId>-->
         <!--            <version>16.0.1</version>-->
         <!--        </dependency>-->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <version>${hadoop-version}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.glassfish.jersey</groupId>
-                    <artifactId>jersey-client</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.hadoop</groupId>-->
+<!--            <artifactId>hadoop-client</artifactId>-->
+<!--            <version>${hadoop-version}</version>-->
+<!--            <scope>provided</scope>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.glassfish.jersey</groupId>-->
+<!--                    <artifactId>jersey-client</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
         <!--        <dependency>-->
         <!--            <groupId>org.apache.hadoop</groupId>-->
@@ -143,11 +152,11 @@
         <!--            <version>1.10.34</version>-->
         <!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>30.1.1-jre</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.google.guava</groupId>-->
+<!--            <artifactId>guava</artifactId>-->
+<!--            <version>30.1.1-jre</version>-->
+<!--        </dependency>-->
 
         <!--        <dependency>-->
         <!--            <groupId>org.eclipse.jetty</groupId>-->
@@ -155,17 +164,32 @@
         <!--            <version>9.4.15.v20190215</version>-->
         <!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.alibaba.datax</groupId>
-            <artifactId>plugin-unstructured-storage-util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.datax</groupId>-->
+<!--            <artifactId>plugin-unstructured-storage-util</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.apache.hadoop</groupId>-->
+<!--                    <artifactId>hadoop-common</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+
+        <dependency>
+            <groupId>com.qlangtech.tis.plugins</groupId>
+            <artifactId>tis-hive-flat-table-builder-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

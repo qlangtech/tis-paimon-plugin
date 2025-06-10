@@ -28,8 +28,9 @@ public class TISPaimonCatalogFactory extends HiveCatalogFactory {
         //  options
         DataxPaimonWriter paimonWriter
                 = (DataxPaimonWriter) DataxWriter.load(null, StoreResourceType.DataApp, dataXName, true);
-       // return paimonWriter.catalog.createCatalog();
+        // return paimonWriter.catalog.createCatalog();
         Configuration hadoopConf = paimonWriter.catalog.getConfiguration();
+        hadoopConf.set(StoreResourceType.DATAX_NAME, dataXName);
         CatalogContext catalogContext = CatalogContext.create(context.options(), hadoopConf);
 //
         return org.apache.paimon.hive.HiveCatalog.createHiveCatalog(catalogContext);

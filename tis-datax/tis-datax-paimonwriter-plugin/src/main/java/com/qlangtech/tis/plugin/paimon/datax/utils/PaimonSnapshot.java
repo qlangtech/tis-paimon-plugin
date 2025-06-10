@@ -4,7 +4,9 @@ import com.qlangtech.tis.extension.Describable;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
+import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
+import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
@@ -14,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.schema.Schema.Builder;
+import org.apache.paimon.utils.TimeUtils;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -77,9 +80,10 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
 //                Duration dur = (Duration) val;
 //                return dur.toHours();
 //            };
-            opts.add("timeRetained"
-                    , CoreOptions.SNAPSHOT_TIME_RETAINED
-                    , labelProp);
+            TISAssistProp<ConfigOption> snapshotAssistProp
+                    = TISAssistProp.create(CoreOptions.SNAPSHOT_TIME_RETAINED);
+            snapshotAssistProp.setOverwriteProp(labelProp);
+            opts.add("timeRetained", snapshotAssistProp);
         }
 
         @Override

@@ -19,15 +19,15 @@ import java.util.List;
  **/
 public class TestHiveCatalog {
 
+
     @Test
     public void testUrl() throws Exception {
 
-        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/hive/metastore/HiveMetaStoreClient.class");
+        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/paimon/schema/Schema$Builder.class");
         while (resources.hasMoreElements()) {
             System.out.println(resources.nextElement());
         }
     }
-
 
     @Test
     public void testCreateCatalog() throws Exception {

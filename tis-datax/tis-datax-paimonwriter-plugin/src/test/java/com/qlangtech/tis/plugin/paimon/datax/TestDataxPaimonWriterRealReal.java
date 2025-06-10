@@ -41,7 +41,7 @@ public class TestDataxPaimonWriterRealReal {
 
         final DataxPaimonWriter writer = PaimonTestUtils.getPaimonWriter();
 
-        writer.tableBucket = 1;
+       // writer.tableBucket = 1;
         writer.dataXName = testDataXName;
 
         PaimonSelectedTab tab = new PaimonSelectedTab();

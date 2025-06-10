@@ -10,6 +10,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -23,14 +25,18 @@ public class TestHiveCatalog {
         PluginDesc.testDescGenerate(HiveCatalog.class, "paimon-hive-catalog-descriptor.json");
     }
 
-//    @Test
-//    public void testUrl() throws Exception {
-//
-//        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/hive/metastore/HiveMetaStoreClient.class");
-//        while (resources.hasMoreElements()) {
-//            System.out.println(resources.nextElement());
-//        }
-//    }
+
+
+    @Test
+    public void testUrl() throws Exception {
+
+      //  Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/hive/metastore/HiveMetaStoreClient.class");
+        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/hadoop/conf/Configuration.class");
+
+        while (resources.hasMoreElements()) {
+            System.out.println(resources.nextElement());
+        }
+    }
 
     @Ignore
     @Test

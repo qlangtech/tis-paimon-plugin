@@ -36,6 +36,11 @@
         <module>tis-datax-paimonwriter-plugin</module>
     </modules>
 
+    <build>
+        <plugins>
 
+
+        </plugins>
+    </build>
 
 </project>

@@ -36,7 +36,7 @@ public class PaimonTestUtils {
         BatchInsertWriteMode writeMode = new BatchInsertWriteMode();
         // writer.fsName = KEY_HDFS200;
         writer.paimonWriteMode = writeMode;
-        writer.tableBucket = 1;
+        writer.tableBucket = -1;
         writer.storeFormat = FILE_FORMAT_PARQUET;
 
         PaimonCompaction compaction = new PaimonCompaction();

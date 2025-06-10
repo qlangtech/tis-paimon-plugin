@@ -3,83 +3,14 @@
 [WARNING] Unrecognised tag: 'build' (position: START_TAG seen ...</distributionManagement>\n -->\n  <build>... @125:10)  @ /Users/mozhenghua/j2ee_solution/apache-maven-3.9.9/conf/settings.xml, line 125, column 10
 [WARNING] 
 [INFO] Scanning for projects...
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/maven-tpi-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-builder-api/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/datax-config/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-plugin-parent/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis/4.3.0-SNAPSHOT/maven-metadata.xml
 [INFO] 
 [INFO] -----< com.qlangtech.tis.plugins:tis-flink-pipeline-paimon-plugin >-----
 [INFO] Building tis-flink-pipeline-paimon-plugin 4.3.0-SNAPSHOT
 [INFO]   from pom.xml
 [INFO] --------------------------------[ tpi ]---------------------------------
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-incr-test/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-incr/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-flink-cdc-common/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-transformer/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-testcontainer-mysql/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-flink-extends/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qlangtech/tis/tis-manage-pojo/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-manage-pojo/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-web-start-api/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qlangtech/tis/tis-web-start-api/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qlangtech/tis/tis-plugin-sezpoz/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-plugin-sezpoz/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qlangtech/tis/xmodifier/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/xmodifier/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-sql-parser/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-common-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-base-test/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-chunjun-base-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-realtime-flink/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-flink-extends-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-flink-dependency/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-k8s-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-powerjob-common-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-connector-jdbc-base/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 1.0 kB                    Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-connector-jdbc-base/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml (1.0 kB at 14 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-connectors/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 628 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-connectors/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml (628 B at 16 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 617 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml (617 B at 4.1 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-core/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 1.0 kB                    Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/dtstack/chunjun/chunjun-core/1.12.5-4.3.0-SNAPSHOT/maven-metadata.xml (1.0 kB at 7.3 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-test-common/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-executor/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-hadoop-rpc/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-common/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-solrconfig-parser/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/tis-dag/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/streamreader/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 993 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/streamreader/4.3.0-SNAPSHOT/maven-metadata.xml (993 B at 12 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-all/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 603 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-all/4.3.0-SNAPSHOT/maven-metadata.xml (603 B at 13 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/streamwriter/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 993 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/streamwriter/4.3.0-SNAPSHOT/maven-metadata.xml (993 B at 16 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-local-executor-utils/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-core/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 991 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-core/4.3.0-SNAPSHOT/maven-metadata.xml (991 B at 12 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-transformer/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 998 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-transformer/4.3.0-SNAPSHOT/maven-metadata.xml (998 B at 8.0 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-common/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 993 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/datax-common/4.3.0-SNAPSHOT/maven-metadata.xml (993 B at 12 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-scala-compiler/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-paimonwriter-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-paimon-datax/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-paimon-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/qlangtech/tis/plugins/tis-datax-hdfs-plugin/4.3.0-SNAPSHOT/maven-metadata.xml
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/hdfsreader/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 991 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/hdfsreader/4.3.0-SNAPSHOT/maven-metadata.xml (991 B at 13 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/plugin-unstructured-storage-util/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 1.0 kB                    Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/plugin-unstructured-storage-util/4.3.0-SNAPSHOT/maven-metadata.xml (1.0 kB at 11 kB/s)
-Downloading from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/hdfswriter/4.3.0-SNAPSHOT/maven-metadata.xml
-Progress (1): 991 B                   Downloaded from rdc-snapshots: http://mvn-repo.oss-cn-hangzhou.aliyuncs.com/snapshot/com/alibaba/datax/hdfswriter/4.3.0-SNAPSHOT/maven-metadata.xml (991 B at 6.8 kB/s)
 [WARNING] 1 problem was encountered while building the effective model for org.apache.hbase:hbase-annotations:jar:1.1.1 during dependency collection step for project (use -X to see details)
 [INFO] 
 [INFO] --- dependency:3.1.2:tree (default-cli) @ tis-flink-pipeline-paimon-plugin ---
-Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qlangtech/tis/tis-builder-api/4.3.0-SNAPSHOT/maven-metadata.xml
 [INFO] com.qlangtech.tis.plugins:tis-flink-pipeline-paimon-plugin:tpi:4.3.0-SNAPSHOT
 [INFO] +- com.qlangtech.tis.plugins:tis-incr-test:jar:4.3.0-SNAPSHOT:test
 [INFO] |  +- com.qlangtech.tis.plugins:tis-flink-cdc-common:jar:4.3.0-SNAPSHOT:test
@@ -238,7 +169,16 @@ Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qla
 [INFO] |  +- org.apache.flink:flink-tests:test-jar:tests:tis-1.20.1:test
 [INFO] |  +- org.apache.flink:flink-table-planner_2.12:test-jar:tests:tis-1.20.1:test
 [INFO] |  +- com.qlangtech.tis.plugins:tis-flink-extends:jar:4.3.0-SNAPSHOT:compile
-[INFO] |  |  +- org.apache.flink:flink-connector-jdbc:jar:3.1.2-1.18:compile
+[INFO] |  |  +- org.apache.flink:flink-connector-jdbc:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-core:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-cratedb:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-db2:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-mysql:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-oceanbase:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-oracle:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-postgres:jar:3.3.0-1.20:compile
+[INFO] |  |  |  +- org.apache.flink:flink-connector-jdbc-sqlserver:jar:3.3.0-1.20:compile
+[INFO] |  |  |  \- org.apache.flink:flink-connector-jdbc-trino:jar:3.3.0-1.20:compile
 [INFO] |  |  +- com.qlangtech.tis:tis-web-start-api:jar:4.3.0-SNAPSHOT:provided
 [INFO] |  |  +- com.qlangtech.tis:datax-config:jar:4.3.0-SNAPSHOT:provided
 [INFO] |  |  \- com.qlangtech.tis:tis-sql-parser:jar:4.3.0-SNAPSHOT:provided
@@ -344,24 +284,24 @@ Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qla
 [INFO] |        |  \- com.amazonaws:jmespath-java:jar:1.12.746:compile
 [INFO] |        +- org.apache.commons:commons-collections4:jar:4.4:compile
 [INFO] |        \- org.bitbucket.b_c:jose4j:jar:0.9.6:compile
-[INFO] +- org.apache.flink:flink-cdc-common:jar:3.4.0:compile
+[INFO] +- org.apache.flink:flink-cdc-composer-tis:jar:3.4.0:compile
 [INFO] |  \- org.apache.flink:flink-shaded-guava:jar:31.1-jre-17.0:compile
-[INFO] +- org.apache.flink:flink-cdc-composer:jar:3.4.0:compile
 [INFO] +- org.apache.flink:flink-cdc-runtime:jar:3.4.0:compile
 [INFO] |  +- org.codehaus.janino:janino:jar:3.1.10:compile
-[INFO] |  \- org.apache.calcite:calcite-core:jar:1.32.0:compile
-[INFO] |     +- org.apache.calcite:calcite-linq4j:jar:1.32.0:compile
-[INFO] |     +- org.locationtech.jts:jts-core:jar:1.19.0:compile
-[INFO] |     +- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.2:compile
-[INFO] |     +- org.apache.calcite.avatica:avatica-core:jar:1.22.0:compile
-[INFO] |     +- org.apiguardian:apiguardian-api:jar:1.1.2:compile
-[INFO] |     +- com.fasterxml.jackson.core:jackson-core:jar:2.13.2:compile
-[INFO] |     +- com.fasterxml.jackson.core:jackson-databind:jar:2.13.2.1:compile
-[INFO] |     +- com.jayway.jsonpath:json-path:jar:2.7.0:runtime
-[INFO] |     |  \- net.minidev:json-smart:jar:2.4.7:runtime
-[INFO] |     |     \- net.minidev:accessors-smart:jar:2.4.7:runtime
-[INFO] |     |        \- org.ow2.asm:asm:jar:9.7:provided
-[INFO] |     \- commons-codec:commons-codec:jar:1.13:compile
+[INFO] |  +- org.apache.calcite:calcite-core:jar:1.32.0:compile
+[INFO] |  |  +- org.apache.calcite:calcite-linq4j:jar:1.32.0:compile
+[INFO] |  |  +- org.locationtech.jts:jts-core:jar:1.19.0:compile
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.2:compile
+[INFO] |  |  +- org.apache.calcite.avatica:avatica-core:jar:1.22.0:compile
+[INFO] |  |  +- org.apiguardian:apiguardian-api:jar:1.1.2:compile
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-core:jar:2.13.2:compile
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.13.2.1:compile
+[INFO] |  |  +- com.jayway.jsonpath:json-path:jar:2.7.0:runtime
+[INFO] |  |  |  \- net.minidev:json-smart:jar:2.4.7:runtime
+[INFO] |  |  |     \- net.minidev:accessors-smart:jar:2.4.7:runtime
+[INFO] |  |  |        \- org.ow2.asm:asm:jar:9.7:provided
+[INFO] |  |  \- commons-codec:commons-codec:jar:1.13:compile
+[INFO] |  \- org.apache.flink:flink-cdc-common:jar:3.4.0:compile
 [INFO] +- com.qlangtech.tis.plugins:tis-scala-compiler:jar:4.3.0-SNAPSHOT:compile
 [INFO] |  +- org.apache.commons:commons-exec:jar:1.3:compile
 [INFO] |  +- com.google.guava:guava:jar:20.0:compile
@@ -560,6 +500,6 @@ Downloading from repo.jenkins-ci.org: https://repo.jenkins-ci.org/public/com/qla
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  9.685 s
-[INFO] Finished at: 2025-05-30T10:39:08+08:00
+[INFO] Total time:  3.652 s
+[INFO] Finished at: 2025-06-09T15:50:56+08:00
 [INFO] ------------------------------------------------------------------------

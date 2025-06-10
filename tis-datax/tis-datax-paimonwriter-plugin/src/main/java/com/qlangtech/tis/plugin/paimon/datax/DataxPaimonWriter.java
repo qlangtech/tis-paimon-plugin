@@ -2,11 +2,13 @@ package com.qlangtech.tis.plugin.paimon.datax;
 
 import com.alibaba.citrus.turbine.Context;
 import com.alibaba.datax.common.element.Column;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.TIS;
 import com.qlangtech.tis.datax.IDataxContext;
 import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.datax.impl.DataxWriter;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
@@ -20,14 +22,14 @@ import com.qlangtech.tis.plugin.KeyedPluginStore.Key;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
-import com.qlangtech.tis.plugin.datax.BasicFSWriter;
-import com.qlangtech.tis.plugin.datax.BasicFSWriter.FSDataXContext;
 import com.qlangtech.tis.plugin.datax.HdfsWriterDescriptor;
 import com.qlangtech.tis.plugin.datax.transformer.RecordTransformerRules;
 import com.qlangtech.tis.plugin.ds.DataType;
 import com.qlangtech.tis.plugin.ds.DataType.TypeVisitor;
 import com.qlangtech.tis.plugin.ds.IColMetaGetter;
+import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
@@ -35,11 +37,16 @@ import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWrit
 import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.data.BinaryString;
+import org.apache.paimon.hive.RetryingMetaStoreClientFactory;
+import org.apache.paimon.hive.RetryingMetaStoreClientFactory.HiveMetastoreProxySupplier;
 import org.apache.paimon.options.ConfigOption;
-import org.apache.paimon.options.ConfigOptions;
 import org.apache.paimon.schema.Schema.Builder;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.types.BigIntType;
@@ -51,11 +58,18 @@ import org.apache.paimon.types.TimestampType;
 import org.apache.paimon.types.VarBinaryType;
 import org.apache.paimon.types.VarCharType;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import static org.apache.paimon.CoreOptions.FILE_FORMAT_AVRO;
@@ -70,6 +84,94 @@ import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
  **/
 public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware {
 
+    static {
+        try {
+
+            final HiveMetastoreProxySupplier tisProxySupplier = new HiveMetastoreProxySupplier() {
+                @Override
+                public IMetaStoreClient get(Method getProxyMethod, Configuration conf, String clientClassName)
+                        throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+                    String pipelineName = conf.get(StoreResourceType.DATAX_NAME);
+                    if (StringUtils.isEmpty(pipelineName)) {
+                        throw new IllegalStateException("param " + StoreResourceType.DATAX_NAME + " can not be empty");
+                    }
+                    DataxPaimonWriter paimonWriter
+                            = (DataxPaimonWriter) DataxWriter.load(null, StoreResourceType.DataApp, pipelineName, true);
+                    return ((HiveCatalog) Objects.requireNonNull(paimonWriter, "paimonWriter can not be null").catalog)
+                            .getHiveConnGetter().createMetaStoreClient().unwrapClient();
+                }
+            };
+
+            ImmutableMap.Builder<Class<?>[], HiveMetastoreProxySupplier> proxySuppliersBuilder
+                    = ImmutableMap.<Class<?>[], HiveMetastoreProxySupplier>builder()
+                    // for hive 2.x
+                    .put(
+                            new Class<?>[]{
+                                    HiveConf.class,
+                                    HiveMetaHookLoader.class,
+                                    ConcurrentHashMap.class,
+                                    String.class,
+                                    Boolean.TYPE
+                            },
+                            tisProxySupplier)
+                    .put(
+                            new Class<?>[]{
+                                    HiveConf.class,
+                                    Class[].class,
+                                    Object[].class,
+                                    ConcurrentHashMap.class,
+                                    String.class
+                            },
+                            tisProxySupplier)
+                    // for hive 3.x
+                    .put(
+                            new Class<?>[]{
+                                    Configuration.class,
+                                    HiveMetaHookLoader.class,
+                                    ConcurrentHashMap.class,
+                                    String.class,
+                                    Boolean.TYPE
+                            },
+                            tisProxySupplier)
+                    // for hive 3.x,
+                    // and some metastore client classes providing constructors only for 2.x
+                    .put(
+                            new Class<?>[]{
+                                    Configuration.class,
+                                    Class[].class,
+                                    Object[].class,
+                                    ConcurrentHashMap.class,
+                                    String.class
+                            },
+                            tisProxySupplier);
+
+            setProxySuppliersToEmptyMap("PROXY_SUPPLIERS", proxySuppliersBuilder.build());
+
+            setProxySuppliersToEmptyMap("PROXY_SUPPLIERS_SHADED", Collections.emptyMap());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void setProxySuppliersToEmptyMap(String fieldName, Map<Class<?>[], HiveMetastoreProxySupplier> proxySuppliers) throws Exception {
+        // 1. 获取目标类
+        Class<?> clazz = RetryingMetaStoreClientFactory.class;
+
+        // 2. 获取 PROXY_SUPPLIERS 字段
+        Field field = clazz.getDeclaredField(fieldName);
+
+        // 3. 解除 private 访问限制
+        field.setAccessible(true);
+
+        // 4. 移除 final 修饰符 (关键步骤)
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        int originalModifiers = field.getModifiers();
+        modifiersField.setInt(field, originalModifiers & ~Modifier.FINAL);
+
+        // 5. 设置新值为空 Map
+        field.set(null, proxySuppliers);
+    }
 
     @FormField(ordinal = 1, validate = {Validator.require})
     public PaimonCatalog catalog;
@@ -281,7 +383,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     @TISExtension()
     public static class DefaultDescriptor extends HdfsWriterDescriptor implements IFlatTableBuilderDescriptor, DataxWriter.IRewriteSuFormProperties {
 
-        Options<DataxWriter, ConfigOption> opts;
+        PaimonOptions<DataxWriter> opts;
 
         public DefaultDescriptor() {
             super();

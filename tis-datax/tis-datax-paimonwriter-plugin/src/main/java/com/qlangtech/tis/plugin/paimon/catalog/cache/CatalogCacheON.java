@@ -12,6 +12,7 @@ import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.paimon.catalog.CatalogCache;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.ConfigOption;
@@ -57,7 +58,7 @@ public class CatalogCacheON extends CatalogCache {
 
     @TISExtension
     public static class Desc extends Descriptor<CatalogCache> {
-        AbstractPropAssist.Options<CatalogCache, ConfigOption> opts;
+        PaimonOptions<CatalogCache> opts;
 
         public Desc() {
             super();

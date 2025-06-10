@@ -31,21 +31,6 @@
         <artifactId>tis-realtime-flink</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.apache.flink</groupId>
-        <artifactId>flink-cdc-common</artifactId>
-        <version>${flink.cdc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flink</groupId>
-        <artifactId>flink-cdc-runtime</artifactId>
-        <version>${flink.cdc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flink</groupId>
-        <artifactId>flink-cdc-composer-tis</artifactId>
-        <version>${flink.cdc.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

@@ -37,21 +37,21 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-common</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.flink</groupId>-->
+<!--            <artifactId>flink-cdc-common</artifactId>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-composer-tis</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.flink</groupId>-->
+<!--            <artifactId>flink-cdc-composer-tis</artifactId>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-runtime</artifactId>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.flink</groupId>-->
+<!--            <artifactId>flink-cdc-runtime</artifactId>-->
 
-        </dependency>
+<!--        </dependency>-->
         <dependency>
             <groupId>com.qlangtech.tis.plugins</groupId>
             <artifactId>tis-scala-compiler</artifactId>
