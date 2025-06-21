@@ -1,13 +1,16 @@
 {
-  "partitionPathFields": {
-    "label": "分区字段",
-    "enumMode": "multiple",
-    "enum": "com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab.getPtCandidateFields():uncache_true"
+  "partition": {
+    "label": "分区键",
+    "dftVal": "off"
   },
   "primaryKeys": {
     "label": "主键",
     "enumMode": "multiple",
     "dftVal": "com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab.getDeftRecordKeys():uncache_true",
     "enum": "com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab.getPaimonPrimaryKeys():uncache_true"
+  },
+  "sequenceField": {
+    "label": "sequence",
+    "dftVal": "off"
   }
 }

@@ -6,7 +6,9 @@ import com.qlangtech.tis.extension.util.AbstractPropAssist;
 import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.manage.common.Option;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.paimon.options.ConfigOption;
+import org.apache.paimon.options.description.DescribedEnum;
 import org.apache.paimon.options.description.Description;
 import org.apache.paimon.options.description.HtmlFormatter;
 import org.apache.paimon.utils.TimeUtils;
@@ -15,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author: 百岁（baisui@qlangtech.com）
@@ -98,6 +101,12 @@ public class PaimonPropAssist<T extends Describable> extends AbstractPropAssist<
                             return ((org.apache.paimon.options.MemorySize) o).toString();
                         }
                     };
+                } else if (fieldType == Boolean.class) {
+                    option.overwriteBooleanEnums();
+                } else if (DescribedEnum.class.isAssignableFrom(fieldType)) {
+                    List<Enum> enums = EnumUtils.getEnumList((Class<Enum>) fieldType);
+                    List<Option> opts = enums.stream().map((e) -> new Option(e.name())).collect(Collectors.toList());
+                    TISAssistProp.set(option, opts, configOption.defaultValue());
                 }
             } catch (Exception e) {
                 throw new RuntimeException("fieldName:" + fieldName, e);

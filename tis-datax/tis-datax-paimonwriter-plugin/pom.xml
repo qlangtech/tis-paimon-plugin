@@ -77,6 +77,11 @@
             <version>${paimon.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.qlangtech.tis.plugins</groupId>
+            <artifactId>tis-hive-flat-table-builder-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
         <!--https://github.com/apache/paimon/blob/master/paimon-hive/paimon-hive-connector-2.3/pom.xml-->
@@ -184,11 +189,7 @@
 
 
 
-        <dependency>
-            <groupId>com.qlangtech.tis.plugins</groupId>
-            <artifactId>tis-hive-flat-table-builder-plugin</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
 
     </dependencies>
 

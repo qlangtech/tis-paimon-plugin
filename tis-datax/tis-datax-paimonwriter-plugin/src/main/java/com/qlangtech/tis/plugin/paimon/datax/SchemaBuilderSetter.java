@@ -8,6 +8,6 @@ import org.apache.paimon.schema.Schema;
  **/
 public interface SchemaBuilderSetter {
 
-    public void initializeSchemaBuilder(Schema.Builder schemaBuilder);
+    public void initializeSchemaBuilder(Schema.Builder schemaBuilder, PaimonSelectedTab tab);
 
 }

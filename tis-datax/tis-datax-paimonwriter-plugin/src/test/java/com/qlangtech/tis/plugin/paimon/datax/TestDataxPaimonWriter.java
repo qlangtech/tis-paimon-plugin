@@ -42,9 +42,10 @@ public class TestDataxPaimonWriter {
 
     @Test
     public void testInitializeSchemaBuilder() {
+        PaimonSelectedTab tab = PaimonTestUtils.createPaimonSelectedTab();
         DataxPaimonWriter paimonWriter = PaimonTestUtils.getPaimonWriter();
         Schema.Builder tabSchemaBuilder = new Schema.Builder();
-        paimonWriter.initializeSchemaBuilder(tabSchemaBuilder);
+        paimonWriter.initializeSchemaBuilder(tabSchemaBuilder, tab);
         Schema schema = tabSchemaBuilder.build();
         Map<String, String> options = schema.options();
         Assert.assertEquals(8, options.size());

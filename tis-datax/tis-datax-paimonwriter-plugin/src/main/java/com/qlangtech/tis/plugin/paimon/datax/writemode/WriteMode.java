@@ -14,11 +14,25 @@ import org.apache.paimon.table.Table;
  **/
 public abstract class WriteMode implements Describable<WriteMode> {
 
-    public abstract PaimonTableWriter createWriter(Table table);
+    public abstract PaimonTableWriter createWriter(Integer taskId, Table table);
 
+    /**
+     */
     public interface PaimonTableWriter {
         public void writeRow(GenericRow row, int bucket) throws Exception;
 
-        public void flushCache() throws Exception;
+        /**
+         * 在dataX执行完成哪部立即commit
+         *
+         * @throws Exception
+         */
+        public void instantCommitAfter() throws Exception;
+
+        /**
+         * 整个任务同步任务完成之后离线一次commit
+         *
+         * @throws Exception
+         */
+        public void offlineFlushCache() throws Exception;
     }
 }

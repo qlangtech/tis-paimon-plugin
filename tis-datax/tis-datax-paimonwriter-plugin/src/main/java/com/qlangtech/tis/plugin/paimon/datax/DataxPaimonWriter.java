@@ -1,69 +1,67 @@
 package com.qlangtech.tis.plugin.paimon.datax;
 
 import com.alibaba.citrus.turbine.Context;
-import com.alibaba.datax.common.element.Column;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.TIS;
+import com.qlangtech.tis.assemble.FullbuildPhase;
+import com.qlangtech.tis.datax.IDataXBatchPost;
+import com.qlangtech.tis.datax.IDataXGenerateCfgs;
 import com.qlangtech.tis.datax.IDataxContext;
 import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
 import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.datax.impl.DataxWriter;
+import com.qlangtech.tis.exec.ExecutePhaseRange;
+import com.qlangtech.tis.exec.IExecChainContext;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.impl.IOUtils;
-import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.OverwriteProps;
+import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPostTrigger;
+import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPreviousTrigger;
 import com.qlangtech.tis.fullbuild.taskflow.IFlatTableBuilderDescriptor;
 import com.qlangtech.tis.manage.common.Option;
+import com.qlangtech.tis.plugin.IEndTypeGetter.EndType;
 import com.qlangtech.tis.plugin.KeyedPluginStore;
 import com.qlangtech.tis.plugin.KeyedPluginStore.Key;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.datax.HdfsWriterDescriptor;
+import com.qlangtech.tis.plugin.datax.common.AutoCreateTable;
+import com.qlangtech.tis.plugin.datax.common.AutoCreateTable.BasicDescriptor;
 import com.qlangtech.tis.plugin.datax.transformer.RecordTransformerRules;
-import com.qlangtech.tis.plugin.ds.DataType;
-import com.qlangtech.tis.plugin.ds.DataType.TypeVisitor;
-import com.qlangtech.tis.plugin.ds.IColMetaGetter;
+import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
+import com.qlangtech.tis.plugin.paimon.datax.hook.PostExecutor;
+import com.qlangtech.tis.plugin.paimon.datax.hook.PreExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
 import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
+import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
-import org.apache.paimon.data.BinaryString;
 import org.apache.paimon.hive.RetryingMetaStoreClientFactory;
 import org.apache.paimon.hive.RetryingMetaStoreClientFactory.HiveMetastoreProxySupplier;
-import org.apache.paimon.options.ConfigOption;
+import org.apache.paimon.schema.Schema;
 import org.apache.paimon.schema.Schema.Builder;
 import org.apache.paimon.table.Table;
-import org.apache.paimon.types.BigIntType;
-import org.apache.paimon.types.BinaryType;
-import org.apache.paimon.types.DateType;
-import org.apache.paimon.types.DecimalType;
-import org.apache.paimon.types.DoubleType;
-import org.apache.paimon.types.TimestampType;
-import org.apache.paimon.types.VarBinaryType;
-import org.apache.paimon.types.VarCharType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.apache.paimon.CoreOptions.FILE_FORMAT_AVRO;
 import static org.apache.paimon.CoreOptions.FILE_FORMAT_ORC;
@@ -82,7 +81,7 @@ import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-15 14:56
  **/
-public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware {
+public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware, IDataXBatchPost {
 
     static {
         try {
@@ -191,17 +190,39 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     @FormField(ordinal = 11, validate = {Validator.require})
     public WriteMode paimonWriteMode;
 
+    @FormField(ordinal = 12, validate = {Validator.require})
+    // 目标源中是否自动创建表，这样会方便不少
+    public AutoCreateTable autoCreateTable;
+
+    @Override
+    public boolean isGenerateCreateDDLSwitchOff() {
+        // 不用创建create table ddl，但是建表还是需要的
+        return true;
+    }
+
+    @FormField(ordinal = 13, advance = true, validate = {Validator.require})
+    public ChangelogProducer changelog;
+
+    public static List<? extends Descriptor> supportedTableCreator(List<? extends Descriptor> descs) {
+        if (CollectionUtils.isEmpty(descs)) {
+            // return Collections.emptyList();
+            throw new IllegalStateException("supportedTableCreator can not be empty");
+        }
+        return descs.stream().filter((desc) -> {
+                    EndType endType = ((BasicDescriptor) desc).getEndType();
+                    return endType != null && endType == EndType.Paimon;
+                }
+        ).collect(Collectors.toList());
+    }
+
     @FormField(ordinal = 16, validate = {Validator.require})
     public PaimonCompaction compaction;
 
-    @FormField(ordinal = 18, validate = {Validator.require})
+    @FormField(ordinal = 18, advance = true, validate = {Validator.require})
     public PaimonSnapshot snapshot;
 
-//    @FormField(ordinal = 20, validate = {Validator.require})
-//    public PaimonHiveCfg hiveCfg;
 
-
-    @FormField(ordinal = 22, type = FormFieldType.TEXTAREA, advance = false, validate = {Validator.require})
+    @FormField(ordinal = 22, advance = false, type = FormFieldType.TEXTAREA, validate = {Validator.require})
     public String template;
 
     public String dataXName;
@@ -212,15 +233,20 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     }
 
     @Override
-    public void initializeSchemaBuilder(Builder tabSchemaBuilder) {
+    public void initializeSchemaBuilder(Builder tabSchemaBuilder, PaimonSelectedTab tab) {
 
         DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
         desc.opts.setTarget((field, val) -> {
             tabSchemaBuilder.option(field.key(), String.valueOf(val));
         }, this);
 
-        this.compaction.initializeSchemaBuilder(tabSchemaBuilder);
-        this.snapshot.initializeSchemaBuilder(tabSchemaBuilder);
+        this.changelog.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        this.catalog.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        this.compaction.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        this.snapshot.initializeSchemaBuilder(tabSchemaBuilder, tab);
+
+
+        tab.sequenceField.initializeSchemaBuilder(tabSchemaBuilder, tab);
     }
 
 
@@ -254,37 +280,35 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         return this.catalog.createCatalog(this.dataXName);
     }
 
-    public PaimonTableWriter createWriter(Table table) {
-        return Objects.requireNonNull(this.paimonWriteMode).createWriter(table);
+    public PaimonTableWriter createWriter(Integer taskId, Table table) {
+        return Objects.requireNonNull(this.paimonWriteMode).createWriter(taskId, table);
     }
 
-    private static final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<>() {
-        @Override
-        protected DateFormat initialValue() {
-            return new SimpleDateFormat("yyyy-MM-dd");
-        }
-    };
-
-
-    private static final ThreadLocal<DateFormat> dateTimeFormat = new ThreadLocal<>() {
-        @Override
-        protected DateFormat initialValue() {
-            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        }
-    };
+    public Function<PaimonSelectedTab, Map<String, String>> createTabOpts() {
+        return (tab) -> {
+            Builder schemaBuilder = new Builder();
+            initializeSchemaBuilder(schemaBuilder, tab);
+            Schema schema = schemaBuilder.build();
+            Map<String, String> tableOptions = schema.options();
+            return tableOptions;
+        };
+    }
 
 
     public class PaimonFSDataXContext implements IDataxContext {
         protected final IDataxProcessor.TableMap tabMap;
         private final String dataxName;
-        private final List<IColMetaGetter> cols;
         private final String targetDataBaseName;
+        private final List<String> primaryKeys;
+        private final List<PaimonColumn> paimonCols;
 
-        public PaimonFSDataXContext(String targetDataBaseName, TableMap tabMap, String dataxName, Optional<RecordTransformerRules> transformerRules) {
-            //super(tabMap, dataxName, transformerRules);
+        public PaimonFSDataXContext(String targetDataBaseName, TableMap tabMap
+                , String dataxName, Optional<RecordTransformerRules> transformerRules) {
             this.tabMap = tabMap;
             this.dataxName = dataxName;
-            this.cols = tabMap.appendTransformerRuleCols(transformerRules);
+            PaimonSelectedTab sourceTab = (PaimonSelectedTab) tabMap.getSourceTab();
+            this.paimonCols = sourceTab.getPaimonCols(tabMap, transformerRules);
+            this.primaryKeys = tabMap.getPrimaryKeys();
             if (StringUtils.isEmpty(targetDataBaseName)) {
                 throw new IllegalArgumentException("param targetDataBaseName can not be empty");
             }
@@ -307,67 +331,36 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
             return tabName;
         }
 
-        public final List<IColMetaGetter> getCols() {
-            return this.cols;
-        }
-
         /**
          * @return
          * @see org.apache.paimon.types.DataTypes
          * @see org.apache.paimon.data.GenericRow
          */
         public List<PaimonColumn> getPaimonCols() {
-            List<PaimonColumn> paimonCols = Lists.newArrayList();
-            List<IColMetaGetter> cols = this.getCols();
-            for (IColMetaGetter col : cols) {
-                paimonCols.add(new PaimonColumn(col.getName()
-                        , col.getType().accept(new TypeVisitor<Pair<org.apache.paimon.types.DataType, Function<Column, Object>>>() {
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> decimalType(DataType type) {
-                        return Pair.of(new DecimalType()
-                                , (col) -> org.apache.paimon.data.Decimal.fromBigDecimal(
-                                        col.asBigDecimal(), type.getColumnSize(), type.getDecimalDigits()));
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> bigInt(DataType type) {
-                        return Pair.of(new BigIntType(), (col) -> col.asLong());
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> doubleType(DataType type) {
-                        return Pair.of(new DoubleType(), Column::asDouble);
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> dateType(DataType type) {
-                        return Pair.of(new DateType(), (col) -> dateFormat.get().format(col.asDate()));
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> timestampType(DataType type) {
-                        return Pair.of(new TimestampType(type.getColumnSize()), (col) -> org.apache.paimon.data.Timestamp.fromEpochMillis(col.asLong()));
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> bitType(DataType type) {
-                        return Pair.of(new BinaryType(1), Column::asBytes);
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> blobType(DataType type) {
-                        return Pair.of(new VarBinaryType(type.getColumnSize()), Column::asBytes);
-                    }
-
-                    @Override
-                    public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> varcharType(DataType type) {
-                        return Pair.of(new VarCharType(type.getColumnSize()), (col) -> BinaryString.fromString(col.asString()));
-                    }
-                })));
-            }
-            return paimonCols;
+            return this.paimonCols;
         }
+    }
+
+    @Override
+    public EntityName parseEntity(ISelectedTab tab) {
+        Optional<String> dbName = this.catalog.getDBName();
+        return dbName.map((name) -> EntityName.create(name, tab.getEntityName().getTabName()))
+                .orElse(tab.getEntityName());
+    }
+
+    @Override
+    public ExecutePhaseRange getPhaseRange() {
+        return new ExecutePhaseRange(FullbuildPhase.FullDump, FullbuildPhase.JOIN);
+    }
+
+    @Override
+    public IRemoteTaskPreviousTrigger createPreExecuteTask(IExecChainContext execContext, EntityName entity, ISelectedTab tab) {
+        return new PreExecutor(execContext, this, entity, (PaimonSelectedTab) tab);
+    }
+
+    @Override
+    public IRemoteTaskPostTrigger createPostTask(IExecChainContext execContext, EntityName entity, ISelectedTab tab, IDataXGenerateCfgs cfgFileNames) {
+        return new PostExecutor(execContext, this, entity, (PaimonSelectedTab) tab);
     }
 
     @Override
@@ -424,6 +417,11 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
                         return false;
                 }
             }
+            return true;
+        }
+
+        @Override
+        public boolean isRdbms() {
             return true;
         }
 

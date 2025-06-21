@@ -1,12 +1,15 @@
 package com.qlangtech.tis.plugins.incr.flink.connector;
 
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
+import com.qlangtech.tis.plugin.datax.transformer.UDFDefinition;
 import com.qlangtech.tis.plugin.ds.CMeta;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.cdc.common.event.CreateTableEvent;
 import org.apache.flink.cdc.common.event.DataChangeEvent;
 import org.apache.flink.cdc.common.event.Event;
@@ -23,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author: 百岁（baisui@qlangtech.com）
@@ -31,6 +35,7 @@ import java.util.Set;
 public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
     private Set<TableId> alreadySendCreateTableTables = new HashSet<>();
     private Map<String, CreateTableEvent> createTableEventCache = new HashMap<>();
+    private Map<String, String> tableOpts;
     // private List<ISelectedTab> tabs;
 
     /**
@@ -38,7 +43,8 @@ public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
      * @param tabs
      * @param sourceColsMetaMapper
      */
-    public SchemaEmitterFunction(Optional<String> sinkDBName, List<ISelectedTab> tabs, Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper) {
+    public SchemaEmitterFunction(Optional<String> sinkDBName, Function<PaimonSelectedTab, Map<String, String>> tableOptsCreator
+            , List<ISelectedTab> tabs, Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper) {
         // this.tabs = tabs;
         TableId tableId = null;
         for (ISelectedTab tab : tabs) {
@@ -48,40 +54,45 @@ public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
                     : TableId.tableId(sinkDBName.get(), entityName.getTableName());
             createTableEventCache.put(tableId.getTableName()
                     , new CreateTableEvent(tableId
-                            , parseDDL(tableId, (PaimonSelectedTab) tab
+                            , parseDDL(tableId, tableOptsCreator.apply((PaimonSelectedTab) tab), (PaimonSelectedTab) tab
                             , Objects.requireNonNull(sourceColsMetaMapper.get(tableId.getTableName())
-                                    , "table:" + tableId + " relevant flinkCols can not be null"))));
+                                    , "table:" + tableId + " relevant flinkCols can not be null").getKey())));
         }
+        if (MapUtils.isEmpty(tableOpts)) {
+            throw new IllegalArgumentException("tableOpts can not be empty");
+        }
+        this.tableOpts = tableOpts;
     }
 
-    private static Schema parseDDL(TableId tableId, PaimonSelectedTab tab, List<FlinkCol> cols) {
+    private static Schema parseDDL(TableId tableId, Map<String, String> tableOpts, PaimonSelectedTab tab, List<FlinkCol> cols) {
         // Table table = parseDdl(ddlStatement, tableId);
 
         //List<CMeta> columns = tab.getCols();
-        Schema.Builder tableBuilder = Schema.newBuilder();
+        Schema.Builder schemaBuilder = Schema.newBuilder();
+        schemaBuilder.options(tableOpts);
         DataType dataType = null;
         FlinkCol column = null;
         for (int i = 0; i < cols.size(); i++) {
             column = cols.get(i);
             dataType = column.flinkCDCPipelineEventProcess.getDataType();
             // String colName = column.name();
-            tableBuilder.physicalColumn(
+            schemaBuilder.physicalColumn(
                     column.name,
                     dataType,
                     null,
                     null);
         }
-        tableBuilder.comment(null);
+        schemaBuilder.comment(null);
 
         List<String> primaryKey = tab.getPrimaryKeys();
         if (Objects.nonNull(primaryKey) && !primaryKey.isEmpty()) {
-            tableBuilder.primaryKey(primaryKey);
+            schemaBuilder.primaryKey(primaryKey);
         }
-        List<String> pts = tab.partitionPathFields;
+        List<String> pts = tab.getPartitionKeys();
         if (CollectionUtils.isNotEmpty(pts)) {
-            tableBuilder.partitionKey(pts);
+            schemaBuilder.partitionKey(pts);
         }
-        return tableBuilder.build();
+        return schemaBuilder.build();
     }
 
     @Override

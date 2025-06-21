@@ -24,9 +24,8 @@ public class StreamInsertWriteMode extends WriteMode {
     @FormField(ordinal = 0, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer batchSize;
 
-
     @Override
-    public PaimonTableWriter createWriter(Table table) {
+    public PaimonTableWriter createWriter(Integer taskId,Table table) {
         StreamWriteBuilder writeBuilder = table.newStreamWriteBuilder();
         StreamTableWrite write = writeBuilder.newWrite();
         return new PaimonStreamTableWrite(write, writeBuilder, this.batchSize);
@@ -72,11 +71,17 @@ public class StreamInsertWriteMode extends WriteMode {
             }
         }
 
+
         @Override
-        public void flushCache() throws Exception {
+        public void instantCommitAfter() throws Exception {
             if (counter.incrementAndGet() > 0) {
                 this.flush();
             }
+        }
+
+        @Override
+        public void offlineFlushCache() throws Exception {
+
         }
     }
 

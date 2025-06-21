@@ -11,6 +11,7 @@ import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.SchemaBuilderSetter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.CoreOptions;
@@ -53,7 +54,7 @@ public class PaimonSnapshot implements Describable<PaimonSnapshot>, SchemaBuilde
     public Duration timeRetained;
 
     @Override
-    public void initializeSchemaBuilder(Builder schemaBuilder) {
+    public void initializeSchemaBuilder(Builder schemaBuilder, PaimonSelectedTab tab) {
         DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
         Objects.requireNonNull(desc, "desc can not be null").opts.setTarget((field, val) -> {
             schemaBuilder.option(field.key(), String.valueOf(val));

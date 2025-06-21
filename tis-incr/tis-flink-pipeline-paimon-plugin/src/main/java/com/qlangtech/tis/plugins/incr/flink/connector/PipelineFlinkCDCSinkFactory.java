@@ -8,9 +8,14 @@ import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.realtime.BasicTISSinkFactory;
+import com.qlangtech.tis.realtime.DTOSourceTagProcessFunction;
 import com.qlangtech.tis.realtime.TabSinkFunc;
+import com.qlangtech.tis.sql.parser.tuple.creator.AdapterStreamTemplateData;
+import com.qlangtech.tis.sql.parser.tuple.creator.IStreamIncrGenerateStrategy;
 import org.apache.flink.cdc.common.event.Event;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,15 +25,25 @@ import java.util.Map;
  * @create: 2025-05-22 09:01
  **/
 public abstract class PipelineFlinkCDCSinkFactory
-        extends BasicTISSinkFactory<Event> implements IDataXNameAware {
+        extends BasicTISSinkFactory<Event> implements IDataXNameAware, IStreamIncrGenerateStrategy {
 
     public static final String DISPLAY_NAME_FLINK_PIPELINE_SINK = "FlinkCDC-Pipeline-Sink-";
-    @FormField(ordinal = 12, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
-    public Integer parallelism;
+//    @FormField(ordinal = 12, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+//    public Integer parallelism;
 
     @Override
     public Map<TableAlias, TabSinkFunc<?, ?, Event>> createSinkFunction(IDataxProcessor dataxProcessor, IFlinkColCreator flinkColCreator) {
-       throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public IStreamTemplateData decorateMergeData(IStreamTemplateData mergeData) {
+        return new AdapterStreamTemplateData(mergeData) {
+            @Override
+            public List<TableAlias> getDumpTables() {
+                return Collections.singletonList(DTOSourceTagProcessFunction.createAllMergeTableAlias());
+            }
+        };
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.qlangtech.tis.plugin.paimon.catalog;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
 import com.qlangtech.tis.config.hive.meta.HiveTable;
 import com.qlangtech.tis.config.hive.meta.IHiveMetaStore;
+import com.qlangtech.tis.datax.StoreResourceTypeConstants;
+import com.qlangtech.tis.manage.common.CenterResource;
 import com.qlangtech.tis.offline.FileSystemFactory;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import org.apache.paimon.catalog.Catalog;
@@ -22,11 +24,14 @@ public class TestHiveCatalog {
 
     @Test
     public void testUrl() throws Exception {
+        short i = 1;
+        System.out.println(String.valueOf((byte) i));
 
-        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/paimon/schema/Schema$Builder.class");
-        while (resources.hasMoreElements()) {
-            System.out.println(resources.nextElement());
-        }
+
+//        Enumeration<URL> resources = this.getClass().getClassLoader().getResources("org/apache/paimon/schema/Schema$Builder.class");
+//        while (resources.hasMoreElements()) {
+//            System.out.println(resources.nextElement());
+//        }
     }
 
     @Test

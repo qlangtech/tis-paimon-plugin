@@ -142,10 +142,6 @@ public class HiveCatalog extends PaimonCatalog {
         return options;
     }
 
-    @Override
-    public void initializeSchemaBuilder(Builder schemaBuilder) {
-
-    }
 
     @TISExtension
     public static final class DefaultDescriptor extends BasicCatalogDescriptor {

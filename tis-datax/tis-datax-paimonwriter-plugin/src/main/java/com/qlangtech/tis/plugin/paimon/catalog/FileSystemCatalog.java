@@ -42,10 +42,6 @@ public class FileSystemCatalog extends PaimonCatalog {
         return CatalogFactory.createCatalog(context);
     }
 
-    @Override
-    public void initializeSchemaBuilder(Builder schemaBuilder) {
-
-    }
 
     /**
      * 暂时先不启动，使用hive的catalog就行了

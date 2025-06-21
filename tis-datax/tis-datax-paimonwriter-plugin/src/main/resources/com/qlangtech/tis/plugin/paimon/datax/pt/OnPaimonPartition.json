@@ -1,0 +1,7 @@
+{
+  "partitionPathFields": {
+    "label": "分区字段",
+    "enumMode": "multiple",
+    "enum": "com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab.getPtCandidateFields():uncache_true"
+  }
+}

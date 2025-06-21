@@ -6,6 +6,7 @@ import com.qlangtech.tis.async.message.client.consumer.IFlinkColCreator;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
 import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.StoreResourceType;
+import com.qlangtech.tis.plugin.datax.transformer.UDFDefinition;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.paimon.catalog.FileSystemCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
@@ -14,11 +15,13 @@ import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalogVisitor;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugins.incr.flink.pipeline.paimon.sink.PaimonPipelineSinkFactory;
+import com.qlangtech.tis.realtime.FilterUpdateBeforeEvent.DTOFilter;
 import com.qlangtech.tis.realtime.SelectedTableTransformerRules;
 import com.qlangtech.tis.realtime.TabSinkFunc;
 import com.qlangtech.tis.realtime.dto.DTOStream;
 import com.qlangtech.tis.realtime.transfer.DTO;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.cdc.common.configuration.Configuration;
@@ -49,7 +52,6 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.paimon.options.Options;
-import org.apache.paimon.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import static com.qlangtech.tis.realtime.transfer.DTO.EventType.UPDATE_BEFORE;
 
 /**
  * 支持flink-cdc pipeline event sink
@@ -75,7 +79,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
     private final PaimonPipelineSinkFactory pipelineSinkFactory;
     private final List<ISelectedTab> tabs;
 
-    protected final Map<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapper;
+    protected final Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper;
     private final Optional<String> sinkDBName;
 
     public PipelineEventSinkFunc(IDataxProcessor dataxProcessor
@@ -91,7 +95,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
         this.pipelineSinkFactory = Objects.requireNonNull(pipelineSinkFactory, "pipelineSinkFactory can not be null");
         this.tabs = Objects.requireNonNull(tabs, "tabs can not be null");
         this.sinkDBName = paimonWriter.catalog.getDBName();
-        Builder<String /**tabName*/, List<FlinkCol>> sourceColsMetaMapperBuilder = ImmutableMap.builder();
+        Builder<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapperBuilder = ImmutableMap.builder();
         Optional<SelectedTableTransformerRules> transformerOpt = null;
         for (ISelectedTab selTab : this.tabs) {
 
@@ -100,7 +104,8 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
                     , Objects.requireNonNull(sourceFlinkColCreator, "sourceFlinkColCreator can not be null"));
 
             sourceColsMetaMapperBuilder.put(selTab.getName()
-                    , FlinkCol.createSourceCols(null, selTab, sourceFlinkColCreator, transformerOpt));
+                    , Pair.of(FlinkCol.createSourceCols(null, selTab, sourceFlinkColCreator, transformerOpt)
+                            , transformerOpt.map((t) -> t.getTransformerRules().getTransformerUDFs()).orElse(null)));
         }
         sourceColsMetaMapper = sourceColsMetaMapperBuilder.build();
     }
@@ -112,12 +117,15 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
             TypeInformation<Event> outputType = new EventTypeInfo();
             // Optional<String> dbName = paimonWriter.catalog.getDBName();
             SingleOutputStreamOperator<Event> outputOperator
-                    = sourceStream.getStream().map(
-                            new DTO2FlinkPipelineEventMapper(sinkDBName, this.sourceColsMetaMapper), outputType)
+                    = sourceStream.getStream()
+                    .filter(new DTOFilter(true, Collections.emptyList()))
+                    .name("skip_" + UPDATE_BEFORE).setParallelism(this.sinkTaskParallelism)
+                    .map(new DTO2FlinkPipelineEventMapper(sinkDBName, this.sourceColsMetaMapper), outputType)
                     .name(dataxProcessor.identityValue() + "_dto2Event")
                     .setParallelism(this.sinkTaskParallelism);
 
-            result = outputOperator.process(new SchemaEmitterFunction(sinkDBName, this.tabs, this.sourceColsMetaMapper), outputType)
+            result = outputOperator.process(new SchemaEmitterFunction(
+                            sinkDBName, paimonWriter.createTabOpts(), this.tabs, this.sourceColsMetaMapper), outputType)
                     .name("schema_emitter");
             // outputOperator;
         } else if (sourceStream.clazz == org.apache.flink.cdc.common.event.Event.class) {
@@ -147,7 +155,7 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
         DataSinkTranslator sinkTranslator = new DataSinkTranslator();
         Context dataSinkContext = createDataSinkContext();
         DataSink dataSink = createDataSink(dataSinkContext);
-        PipelineDef pipelineDef = createPipelineDef();
+        PipelineDef pipelineDef = this.createPipelineDef();
         // StreamExecutionEnvironment env, DataSource dataSource, DataSink dataSink, DataSinkTranslator sinkTranslator, DataStream<Event> stream, PipelineDef pipelineDef
         DataSource dataSource = this.createDataSource();
         flinkPipelineComposer.translate(env, dataSource, dataSink, sinkTranslator, sourceStream, pipelineDef);
@@ -179,6 +187,9 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
 
     private PipelineDef createPipelineDef() {
         Configuration configuration = Configuration.fromMap(Maps.newHashMap());
+        configuration.set(PipelineOptions.PIPELINE_PARALLELISM, this.sinkTaskParallelism);
+        configuration.set(PipelineOptions.PIPELINE_LOCAL_TIME_ZONE, this.pipelineSinkFactory.getTimeZone().getId());
+        configuration.set(PipelineOptions.PIPELINE_SCHEMA_CHANGE_BEHAVIOR, this.pipelineSinkFactory.getSchemaChangeBehavior());
         SinkDef sinkDef = new SinkDef(dataxProcessor.identityValue(), null, configuration);
         SourceDef source = new SourceDef(null, null, null);
         // SourceDef source, SinkDef sink, List< RouteDef > routes, List< TransformDef > transforms, List< UdfDef > udfs, Configuration config
@@ -207,23 +218,24 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
      */
     private DataSink createDataSink(Context context) {
         Map<String, String> allOptions = context.getFactoryConfiguration().toMap();
+
         // Map<String, String> catalogOptions = new HashMap<>();
-        final Map<String, String> tableOptions = createTabOpts();
-      //  tableOptions.put(CoreOptions.BUCKET.key(), String.valueOf(this.paimonWriter.tableBucket));
-        allOptions.forEach(
-                (key, value) -> {
-                    if (key.startsWith(PaimonDataSinkOptions.PREFIX_TABLE_PROPERTIES)) {
-                        tableOptions.put(
-                                key.substring(
-                                        PaimonDataSinkOptions.PREFIX_TABLE_PROPERTIES.length()),
-                                value);
-                    } else if (key.startsWith(PaimonDataSinkOptions.PREFIX_CATALOG_PROPERTIES)) {
-//                        catalogOptions.put(
+        final Map<String, String> tableOptions = Collections.emptyMap();// paimonWriter.createTabOpts();
+        //  tableOptions.put(CoreOptions.BUCKET.key(), String.valueOf(this.paimonWriter.tableBucket));
+//        allOptions.forEach(
+//                (key, value) -> {
+//                    if (key.startsWith(PaimonDataSinkOptions.PREFIX_TABLE_PROPERTIES)) {
+//                        tableOptions.put(
 //                                key.substring(
-//                                        PaimonDataSinkOptions.PREFIX_CATALOG_PROPERTIES.length()),
+//                                        PaimonDataSinkOptions.PREFIX_TABLE_PROPERTIES.length()),
 //                                value);
-                    }
-                });
+//                    } else if (key.startsWith(PaimonDataSinkOptions.PREFIX_CATALOG_PROPERTIES)) {
+////                        catalogOptions.put(
+////                                key.substring(
+////                                        PaimonDataSinkOptions.PREFIX_CATALOG_PROPERTIES.length()),
+////                                value);
+//                    }
+//                });
         // catalogOptions.put(StoreResourceType.DATAX_NAME, dataxProcessor.identityValue());
         Options options = this.paimonWriter.catalog.createOpts(dataxProcessor.identityValue());// Options.fromMap(catalogOptions);
         options.set(StoreResourceType.DATAX_NAME, dataxProcessor.identityValue());
@@ -239,34 +251,12 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
             PaimonSelectedTab paimonTab = (PaimonSelectedTab) selectedTab;
             TableId tableId = sinkDBName.isPresent() ? TableId.tableId(sinkDBName.get(), paimonTab.getName()) : TableId.tableId(paimonTab.getName());
 
-            partitionMaps.put(tableId, paimonTab.partitionPathFields);
+            partitionMaps.put(tableId, paimonTab.getPartitionKeys());
         }
 
-//        if (!partitionKey.isEmpty()) {
-//            for (String tables : partitionKey.split(";")) {
-//                String[] splits = tables.split(":");
-//                if (splits.length == 2) {
-//                    TableId tableId = TableId.parse(splits[0]);
-//                    List<String> partitions = Arrays.asList(splits[1].split(","));
-//                    partitionMaps.put(tableId, partitions);
-//                } else {
-//                    throw new IllegalArgumentException(
-//                            PaimonDataSinkOptions.PARTITION_KEY.key()
-//                                    + " is malformed, please refer to the documents");
-//                }
-//            }
-//        }
         PaimonRecordSerializer<Event> serializer = new PaimonRecordEventSerializer(zoneId);
         String schemaOperatorUid = (String) context.getPipelineConfiguration().get(PipelineOptions.PIPELINE_SCHEMA_OPERATOR_UID);
         return new PaimonDataSink(options, tableOptions, commitUser, partitionMaps, serializer, zoneId, schemaOperatorUid);
-    }
-
-    private Map<String, String> createTabOpts() {
-        Schema.Builder schemaBuilder = new Schema.Builder();
-        this.paimonWriter.initializeSchemaBuilder(schemaBuilder);
-        Schema schema = schemaBuilder.build();
-        Map<String, String> tableOptions = schema.options();
-        return tableOptions;
     }
 
     private Context createDataSinkContext() {

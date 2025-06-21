@@ -11,17 +11,27 @@ import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.IDataxReader;
 import com.qlangtech.tis.datax.TableAlias;
 import com.qlangtech.tis.extension.TISExtension;
+import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
+import com.qlangtech.tis.extension.util.OverwriteProps;
+import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.plugin.IEndTypeGetter;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
+import com.qlangtech.tis.plugin.incr.IncrStreamFactory;
+import com.qlangtech.tis.plugin.incr.TISSinkFactory;
+import com.qlangtech.tis.plugin.timezone.TISTimeZone;
 import com.qlangtech.tis.plugins.incr.flink.connector.PipelineEventSinkFunc;
 import com.qlangtech.tis.plugins.incr.flink.connector.PipelineFlinkCDCSinkFactory;
+import com.qlangtech.tis.plugins.incr.flink.pipeline.utils.FlinkCDCPropAssist;
 import com.qlangtech.tis.realtime.DTOSourceTagProcessFunction;
 import com.qlangtech.tis.realtime.TabSinkFunc;
 import com.qlangtech.tis.util.HeteroEnum;
+import org.apache.flink.cdc.common.configuration.ConfigOption;
 import org.apache.flink.cdc.common.event.Event;
+import org.apache.flink.cdc.common.pipeline.PipelineOptions;
+import org.apache.flink.cdc.common.pipeline.SchemaChangeBehavior;
 
 import java.time.ZoneId;
 import java.util.List;
@@ -33,11 +43,23 @@ import java.util.Objects;
  * @create: 2025-05-22 09:46
  **/
 public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
-    @FormField(ordinal = 14, type = FormFieldType.ENUM, validate = {Validator.require})
-    public String timeZone;
+
+    public static final String KEY_SCHEMA_BEHAVIOR = "schemaBehavior";
+
+    @FormField(ordinal = 14, validate = {Validator.require})
+    public TISTimeZone timeZone;
+
+    @FormField(ordinal = 13, type = FormFieldType.ENUM, validate = {Validator.require})
+    public String schemaBehavior;
+
+    // public static List<Option> a
+
+    public SchemaChangeBehavior getSchemaChangeBehavior() {
+        return SchemaChangeBehavior.valueOf(this.schemaBehavior);
+    }
 
     public ZoneId getTimeZone() {
-        return ZoneId.of(this.timeZone);
+        return Objects.requireNonNull(timeZone, "timeZone can not be null").getTimeZone();// ZoneId.of(this.timeZone);
     }
 
     @Override
@@ -60,18 +82,17 @@ public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
 //            , IFlinkColCreator<FlinkCol> sourceFlinkColCreator
 //            , Sink<Event> sinkFunction //
 //            , int sinkTaskParallelism
-
+        IncrStreamFactory streamFactory = IncrStreamFactory.getFactory(dataxProcessor.identityValue());
         MQListenerFactory sourceListenerFactory = HeteroEnum.getIncrSourceListenerFactory(dataxProcessor.getDataXName());
         IFlinkColCreator<FlinkCol> sourceFlinkColCreator
                 = Objects.requireNonNull(sourceListenerFactory, "sourceListenerFactory").createFlinkColCreator(reader);
 
-        sinkFuncs.put(TableAlias.create(DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS
-                        , DTOSourceTagProcessFunction.KEY_MERGE_ALL_TABS_IN_ONE_BUS),
+        sinkFuncs.put(DTOSourceTagProcessFunction.createAllMergeTableAlias(),
                 new PipelineEventSinkFunc(dataxProcessor, this
                         , tabs
                         , sourceFlinkColCreator
                         , null
-                        , this.parallelism)
+                        , streamFactory.getParallelism())
         );
 
         return sinkFuncs;
@@ -79,9 +100,24 @@ public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
 
     @TISExtension
     public static class DftDesc extends BasicPipelineSinkDescriptor {
+        public Options<TISSinkFactory, ConfigOption> opts;
+
+        public DftDesc() {
+            super();
+            this.opts = FlinkCDCPropAssist.createOpts(this);
+            OverwriteProps schemaBehaviorOverwrite = new OverwriteProps();
+            schemaBehaviorOverwrite.setDftVal(SchemaChangeBehavior.IGNORE.name());
+//            schemaBehaviorOverwrite.setLabelRewrite((l) -> {
+//                return "表结构变化";
+//            });
+            this.opts.add(KEY_SCHEMA_BEHAVIOR, PipelineOptions.PIPELINE_SCHEMA_CHANGE_BEHAVIOR, schemaBehaviorOverwrite);
+        }
+
         @Override
         protected IEndTypeGetter.EndType getTargetType() {
             return EndType.Paimon;
         }
+
+
     }
 }

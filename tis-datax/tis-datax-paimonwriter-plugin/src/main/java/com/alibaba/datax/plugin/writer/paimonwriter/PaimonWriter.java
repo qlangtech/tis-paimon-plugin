@@ -16,19 +16,19 @@ import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonColumn;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.Catalog.TableNotExistException;
 import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.data.GenericRow;
-import org.apache.paimon.schema.Schema;
 import org.apache.paimon.table.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -38,7 +38,6 @@ import static com.alibaba.datax.plugin.writer.paimonwriter.Key.HADOOP_SECURITY_A
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.HAVE_KERBEROS;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.KERBEROS_KEYTAB_FILE_PATH;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.KERBEROS_PRINCIPAL;
-import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_CONFIG;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_DB_NAME;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.PAIMON_TABLE_NAME;
 import static com.alibaba.datax.plugin.writer.paimonwriter.Key.SOURCE_TABLE_NAME;
@@ -84,7 +83,7 @@ public class PaimonWriter extends Writer {
 
         private String catalogPath;
         private String catalogType;
-        private Catalog catalog;
+        //  private  catalog;
         private Table table;
         private PaimonTableWriter paimonTableWriter;
         private int bucket;
@@ -96,6 +95,7 @@ public class PaimonWriter extends Writer {
         private org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration();
         private List<PaimonColumn> paimonCols;
         private DataxPaimonWriter paimonWriter;
+        private List<String> primaryKeys;
 
         @Override
         public void init() {
@@ -109,6 +109,7 @@ public class PaimonWriter extends Writer {
             PaimonSelectedTab selectedTab = (PaimonSelectedTab) Objects.requireNonNull(
                     reader.getSelectedTab(sourceTableName), "sourceTableName:" + sourceTableName + " can not be null");
 
+            this.primaryKeys = selectedTab.getPrimaryKeys();
 
             this.paimonCols
                     = paimonWriter.createPaimonCols(
@@ -158,15 +159,17 @@ public class PaimonWriter extends Writer {
                     this.kerberosAuthentication(kerberosPrincipal, kerberosKeytabFilePath, hadoopConf);
                 }
 
-                catalog = paimonWriter.createCatalog();
 
-                if (!tableExists(catalog, dbName, tableName)) {
-                    LOG.info("{} 表不存在，开始创建...", dbName.concat("." + tableName));
-                    createTable(catalog, dbName, tableName, paimonCols, selectedTab.getPrimaryKeys(), selectedTab.partitionPathFields);
+                try (Catalog catalog = paimonWriter.createCatalog()) {
+                    Pair<Boolean, Table> tabExist = tableExists(catalog, dbName, tableName);
+                    if (!tabExist.getKey()) {
+                        throw new IllegalStateException(dbName.concat("." + tableName) + " must be exist");
+                    } else {
+                        table = tabExist.getValue();
+                    }
                 }
 
-                table = getTable(catalog, dbName, tableName);
-                paimonTableWriter = paimonWriter.createWriter(Objects.requireNonNull(table));
+                paimonTableWriter = paimonWriter.createWriter(this.containerContext.getTaskId(), Objects.requireNonNull(table));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -182,13 +185,17 @@ public class PaimonWriter extends Writer {
             Record record;
             long num = 0;
             long commitIdentifier = 0;
-            PaimonColumn configuration = null;
+            PaimonColumn pcol = null;
             Column column = null;
+            int[] pksHash = new int[this.primaryKeys.size()];
+            int pkIdx = 0;
+            Object paimonFieldVal = null;
             while ((record = recordReceiver.getFromReader()) != null) {
-
+                Arrays.fill(pksHash, 0);
+                pkIdx = 0;
                 GenericRow row = new GenericRow(paimonCols.size());
                 for (int i = 0; i < paimonCols.size(); i++) {
-                    configuration = paimonCols.get(i);
+                    pcol = paimonCols.get(i);
                     // String columnType = configuration.getString("type");
                     column = record.getColumn(i);
                     Object rawData = column.getRawData();
@@ -197,11 +204,16 @@ public class PaimonWriter extends Writer {
                         row.setField(i, null);
                         continue;
                     }
-
-                    row.setField(i, configuration.getPaimonFieldVal(column));
+                    paimonFieldVal = pcol.getPaimonFieldVal(column);
+                    row.setField(i, paimonFieldVal);
+                    if (pcol.isPrimaryKey()) {
+                        pksHash[pkIdx++] = paimonFieldVal.hashCode();
+                    }
                 }
+
+
                 try {
-                    this.paimonTableWriter.writeRow(row, bucket);
+                    this.paimonTableWriter.writeRow(row, this.bucket > 0 ? (Objects.hash(pksHash) % this.bucket) : 0);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -209,197 +221,26 @@ public class PaimonWriter extends Writer {
 
 
             try {
-                this.paimonTableWriter.flushCache();
+                this.paimonTableWriter.instantCommitAfter();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
-
         }
 
 
-        public void createTable(Catalog catalog, String dbName, String tableName, List<PaimonColumn> cols, List<String> pks, List<String> partKeys) {
-
-            Configuration paimonTableParams = sliceConfig.getConfiguration(PAIMON_CONFIG);
-            JSONObject paimonParamsAsJsonObject = JSON.parseObject(sliceConfig.getString(PAIMON_CONFIG));
-
-            Schema.Builder schemaBuilder = Schema.newBuilder();
-
-            if (null != paimonTableParams) {
-                Set<String> paramKeys = paimonTableParams.getKeys();
-                for (String each : paramKeys) {
-                    schemaBuilder.option(each, paimonParamsAsJsonObject.getString(each));
-                }
+        public static Pair<Boolean, Table> tableExists(Catalog catalog, String dbName, String tableName) {
+            if (StringUtils.isEmpty(dbName)) {
+                throw new IllegalArgumentException("dbName can not be null null");
             }
-            Objects.requireNonNull(this.paimonWriter, "paimonWriter can not be null")
-                    .initializeSchemaBuilder(schemaBuilder);
-
-            for (PaimonColumn columnConfig : cols) {
-//                String columnName = columnConfig.getString("name");
-//                DataType columnType = getPaimonDataType(columnConfig.getString("type"));
-                schemaBuilder.column(columnConfig.getName(), columnConfig.type, null);
+            if (StringUtils.isEmpty(tableName)) {
+                throw new IllegalArgumentException("tableName can not be null null");
             }
-            if (CollectionUtils.isNotEmpty(pks)) {
-                schemaBuilder.primaryKey(pks);
-            }
-            Schema schema = schemaBuilder.build();
-            if (CollectionUtils.isNotEmpty(partKeys)) {
-                schemaBuilder.partitionKeys(partKeys);
-                schema = schemaBuilder.option("metastore.partitioned-table", "true").build();
-            }
-
             Identifier identifier = Identifier.create(dbName, tableName);
             try {
-                catalog.createTable(identifier, schema, false);
-            } catch (Catalog.TableAlreadyExistException e) {
-                throw new RuntimeException("table not exist");
-            } catch (Catalog.DatabaseNotExistException e) {
-                throw new RuntimeException("database: '" + dbName + "' not exist");
-            }
-
-        }
-
-//        public int getMatchValue(String typeName) {
-//
-//            //获取长度
-//            String regex = "\\((\\d+)\\)";
-//            Pattern pattern = Pattern.compile(regex);
-//            Matcher matcher = pattern.matcher(typeName);
-//            int res = 0;
-//
-//            if (matcher.find()) {
-//                res = Integer.parseInt(matcher.group(1));
-//            } else {
-//                LOG.error("{}:类型错误，请检查！", typeName);
-//            }
-//            return res;
-//        }
-
-//        public Pair<Integer, Integer> getDecValue(String typeName) {
-//
-//            String regex = "dd\\((\\d+), (\\d+)\\)";
-//
-//            Pattern pattern = Pattern.compile(regex);
-//            Matcher matcher = pattern.matcher(typeName.trim());
-//            int left = 0;
-//            int right = 0;
-//
-//            if (matcher.find()) {
-//                left = Integer.parseInt(matcher.group(1));
-//                right = Integer.parseInt(matcher.group(2));
-//            } else {
-//                LOG.error("{}:类型错误，请检查！", typeName);
-//            }
-//
-//            return Pair.of(left, right);
-//
-//        }
-
-//        public DataType getPaimonDataType(String typeName) {
-//
-//            String type = typeName.toUpperCase();
-//            DataType dt = DataTypes.STRING();
-//
-//            if (type.equals("BINARY") && !type.contains("VARBINARY")) {
-//                dt = type.contains("(") ? new BinaryType(getMatchValue(type.trim())) : new BinaryType();
-//            } else if (type.contains("VARBINARY")) {
-//                dt = type.contains("(") ? new VarBinaryType(getMatchValue(type.trim())) : new VarBinaryType();
-//            } else if (type.contains("STRING")) {
-//                dt = VarCharType.STRING_TYPE;
-//            } else if (type.contains("VARCHAR")) {
-//                dt = type.contains("(") ? new VarCharType(getMatchValue(type.trim())) : new VarCharType();
-//            } else if (type.contains("CHAR")) {
-//                if (type.contains("NOT NULL")) {
-//                    dt = new CharType().copy(false);
-//                } else if (type.contains("(")) {
-//                    dt = new CharType(getMatchValue(type.trim()));
-//                } else {
-//                    dt = new CharType();
-//                }
-//            } else if (type.contains("BOOLEAN")) {
-//                dt = new BooleanType();
-//            } else if (type.contains("BYTES")) {
-//                dt = new VarBinaryType(VarBinaryType.MAX_LENGTH);
-//            } else if (type.contains("DEC")) { // 包含 DEC 和 DECIMAL
-//                if (type.contains(",")) {
-//                    dt = new DecimalType(getDecValue(type).getLeft(), getDecValue(type).getRight());
-//                } else if (type.contains("(")) {
-//                    dt = new DecimalType(getMatchValue(type.trim()));
-//                } else {
-//                    dt = new DecimalType();
-//                }
-//            } else if (type.contains("NUMERIC") || type.contains("DECIMAL")) {
-//                if (type.contains(",")) {
-//                    dt = new DecimalType(getDecValue(type).getLeft(), getDecValue(type).getRight());
-//                } else if (type.contains("(")) {
-//                    dt = new DecimalType(getMatchValue(type.trim()));
-//                } else {
-//                    dt = new DecimalType();
-//                }
-//            } else if (type.equals("INT")) {
-//                dt = new IntType();
-//            } else if (type.equals("BIGINT") || type.equals("LONG")) {
-//                dt = new BigIntType();
-//            } else if (type.equals("TINYINT")) {
-//                dt = new TinyIntType();
-//            } else if (type.equals("SMALLINT")) {
-//                dt = new SmallIntType();
-//            } else if (type.equals("INTEGER")) {
-//                dt = new IntType();
-//            } else if (type.contains("FLOAT")) {
-//                dt = new FloatType();
-//            } else if (type.contains("DOUBLE")) {
-//                dt = new DoubleType();
-//            } else if (type.contains("DATE")) {
-//                dt = new DateType();
-//            } else if (type.contains("TIME")) {
-//                dt = type.contains("(") ? new TimeType(getMatchValue(type.trim())) : new TimeType();
-//            } else if (type.contains("TIMESTAMP")) {
-//                switch (type) {
-//                    case "TIMESTAMP":
-//                    case "TIMESTAMP WITHOUT TIME ZONE":
-//                        dt = new TimestampType();
-//                        break;
-//                    case "TIMESTAMP(3)":
-//                    case "TIMESTAMP(3) WITHOUT TIME ZONE":
-//                        dt = new TimestampType(3);
-//                        break;
-//                    case "TIMESTAMP WITH LOCAL TIME ZONE":
-//                    case "TIMESTAMP_LTZ":
-//                        dt = new LocalZonedTimestampType();
-//                        break;
-//                    case "TIMESTAMP(3) WITH LOCAL TIME ZONE":
-//                    case "TIMESTAMP_LTZ(3)":
-//                        dt = new LocalZonedTimestampType(3);
-//                        break;
-//                    default:
-//                        LOG.error("{}:类型错误，请检查！", type);
-//                }
-//            } else {
-//                throw new UnsupportedOperationException(
-//                        "Not a supported type: " + typeName);
-//            }
-//
-//            return dt;
-//
-//        }
-
-        public Table getTable(Catalog catalog, String dbName, String tableName) {
-            try {
-                Identifier identifier = Identifier.create(dbName, tableName);
-                return catalog.getTable(identifier);
-            } catch (Catalog.TableNotExistException e) {
-                throw new RuntimeException("table not exist", e);
-            }
-        }
-
-        public boolean tableExists(Catalog catalog, String dbName, String tableName) {
-            Identifier identifier = Identifier.create(dbName, tableName);
-            try {
-                catalog.getTable(identifier);
-                return true;
+                return Pair.of(true, Objects.requireNonNull(catalog, "catalog can not be null")
+                        .getTable(identifier));
             } catch (TableNotExistException e) {
-                return false;
+                return Pair.of(false, null);
             }
 //            boolean exists = catalog.tableExists(identifier);
 //            return exists;

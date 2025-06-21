@@ -1,11 +1,18 @@
 package com.qlangtech.tis.plugin.paimon.datax.test;
 
+import com.alibaba.datax.plugin.writer.hdfswriter.HdfsColMeta;
+import com.google.common.collect.Lists;
+import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.plugin.ds.DataType;
+import com.qlangtech.tis.plugin.ds.JDBCTypes;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheOFF;
 import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
+import com.qlangtech.tis.plugin.paimon.datax.pt.OnPaimonPartition;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode;
 import org.apache.paimon.CoreOptions;
@@ -67,5 +74,48 @@ public class PaimonTestUtils {
         hiveCatalog.catalogCache = new CatalogCacheOFF();
         hiveCatalog.catalogLock = new CatalogLockOFF();
         return hiveCatalog;
+    }
+
+    public static PaimonSelectedTab createPaimonSelectedTab() {
+        final String targetTableName = "customer_order_relation";
+        PaimonSelectedTab tab = new PaimonSelectedTab();
+        String keyCreateTime = "create_time";
+        OnPaimonPartition pt = new OnPaimonPartition();
+        pt.partitionPathFields = Lists.newArrayList(keyCreateTime);
+        tab.partition = pt;
+        tab.name = targetTableName;
+        // List<IColMetaGetter> colMetas = Lists.newArrayList();
+
+//                "customerregister_id",
+//                "waitingorder_id",
+//                "kind",
+//                "create_time",
+//                "last_ver"
+        // DataType
+        HdfsColMeta cmeta = null;
+        // String colName, Boolean nullable, Boolean pk, DataType dataType
+        tab.primaryKeys = Lists.newArrayList();
+        cmeta = new HdfsColMeta("customerregister_id", false
+                , true, DataType.createVarChar(150));
+        tab.cols.add(TableMap.getCMeta(cmeta));
+        tab.primaryKeys.add(cmeta.getName());
+
+        cmeta = new HdfsColMeta("waitingorder_id", false, true
+                , DataType.createVarChar(150));
+        tab.cols.add(TableMap.getCMeta(cmeta));
+        tab.primaryKeys.add(cmeta.getName());
+
+        cmeta = new HdfsColMeta("kind"
+                , true, false, DataType.getType(JDBCTypes.BIGINT));
+        tab.cols.add(TableMap.getCMeta(cmeta));
+
+        cmeta = new HdfsColMeta(keyCreateTime
+                , true, false, DataType.getType(JDBCTypes.BIGINT));
+        tab.cols.add(TableMap.getCMeta(cmeta));
+
+        cmeta = new HdfsColMeta("last_ver"
+                , true, false, DataType.getType(JDBCTypes.BIGINT));
+        tab.cols.add(TableMap.getCMeta(cmeta));
+        return tab;
     }
 }

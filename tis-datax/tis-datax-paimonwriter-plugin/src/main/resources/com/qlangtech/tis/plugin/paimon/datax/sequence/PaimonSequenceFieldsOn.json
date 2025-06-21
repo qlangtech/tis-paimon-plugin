@@ -1,0 +1,6 @@
+{
+  "field": {
+    "enumMode": "multiple",
+    "enum": "com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab.getPtCandidateFields():uncache_true"
+  }
+}

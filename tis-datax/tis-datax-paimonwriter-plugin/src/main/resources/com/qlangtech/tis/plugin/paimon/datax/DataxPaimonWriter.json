@@ -1,6 +1,10 @@
 {
   "template": {
-    "dftVal": "com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.getDftTemplate()"
+    "dftVal": "com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.getDftTemplate()",
+    "rows": 6
+  },
+  "changelog": {
+    "dftVal": "off"
   },
   "writeMode": {
     "disable": true
@@ -13,7 +17,7 @@
   },
   "paimonWriteMode": {
     "label": "writeMode",
-    "dftVal": "Batch"
+    "dftVal": "Stream"
   },
   "catalog": {
     "dftVal": "Hive"
@@ -23,5 +27,10 @@
   },
   "compress": {
     "disable": true
+  },
+  "autoCreateTable": {
+    "label": "自动建表",
+    "subDescEnumFilter": "return com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.supportedTableCreator(desc);",
+    "dftVal": "on"
   }
 }

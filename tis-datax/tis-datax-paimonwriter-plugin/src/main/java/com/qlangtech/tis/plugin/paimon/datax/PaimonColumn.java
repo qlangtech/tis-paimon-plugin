@@ -14,16 +14,26 @@ public class PaimonColumn {
     private final String name;
     public final org.apache.paimon.types.DataType type;
     private final Function<Column, Object> paimonValGetter;
+    private final boolean primaryKey;
 
 
-    public PaimonColumn(String name, Pair<DataType, Function<Column, Object>> typeAndValGetter) {
+    public PaimonColumn(String name, boolean primaryKey, Pair<DataType, Function<Column, Object>> typeAndValGetter) {
         this.name = name;
+        this.primaryKey = primaryKey;
         this.type = typeAndValGetter.getKey();
         this.paimonValGetter = typeAndValGetter.getValue();
     }
 
+    public boolean isPrimaryKey() {
+        return primaryKey;
+    }
+
     public Object getPaimonFieldVal(Column colVal) {
-        return this.paimonValGetter.apply(colVal);
+        try {
+            return this.paimonValGetter.apply(colVal);
+        } catch (Exception e) {
+            throw new RuntimeException("colname:" + name + ",paimonType:" + getType(), e);
+        }
     }
 
     public String getName() {
@@ -32,5 +42,11 @@ public class PaimonColumn {
 
     public String getType() {
         return type.asSQLString();
+    }
+
+    @Override
+    public String toString() {
+        return "name='" + name + '\'' +
+                ", type=" + type;
     }
 }

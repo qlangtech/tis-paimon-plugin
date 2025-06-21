@@ -1,7 +1,5 @@
 package com.qlangtech.tis.plugin.paimon.datax;
 
-import com.alibaba.datax.plugin.writer.hdfswriter.HdfsColMeta;
-import com.google.common.collect.Lists;
 import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
 import com.qlangtech.tis.datax.IDataxReader;
@@ -10,14 +8,19 @@ import com.qlangtech.tis.datax.TableAliasMapper;
 import com.qlangtech.tis.datax.impl.DataXCfgGenerator;
 import com.qlangtech.tis.datax.impl.DataxProcessor;
 import com.qlangtech.tis.datax.impl.DataxWriter;
+import com.qlangtech.tis.exec.IExecChainContext;
+import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPostTrigger;
+import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPreviousTrigger;
 import com.qlangtech.tis.plugin.common.BasicTemplate;
 import com.qlangtech.tis.plugin.common.DataXCfgJson;
 import com.qlangtech.tis.plugin.common.WriterTemplate;
-import com.qlangtech.tis.plugin.ds.DataType;
-import com.qlangtech.tis.plugin.ds.JDBCTypes;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
+import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.easymock.EasyMock;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -33,53 +36,24 @@ public class TestDataxPaimonWriterRealReal {
 //    @Rule
 //    public TemporaryFolder folder = new TemporaryFolder();
 
+    @BeforeClass
+    public static void beforeClazz() {
+        //
+        //  System.setProperty(KEY_JAVA_RUNTIME_PROP_ENV_PROPS, Boolean.TRUE.toString());
+    }
+
     @Test
     public void testRealDump() throws Exception {
 
-        final String targetTableName = "customer_order_relation";
+
         String testDataXName = "mysql_paimon";
 
         final DataxPaimonWriter writer = PaimonTestUtils.getPaimonWriter();
 
-       // writer.tableBucket = 1;
+        // writer.tableBucket = 1;
         writer.dataXName = testDataXName;
 
-        PaimonSelectedTab tab = new PaimonSelectedTab();
-        String keyCreateTime = "create_time";
-        tab.partitionPathFields = Lists.newArrayList(keyCreateTime);
-        tab.name = targetTableName;
-        // List<IColMetaGetter> colMetas = Lists.newArrayList();
-
-//                "customerregister_id",
-//                "waitingorder_id",
-//                "kind",
-//                "create_time",
-//                "last_ver"
-        // DataType
-        HdfsColMeta cmeta = null;
-        // String colName, Boolean nullable, Boolean pk, DataType dataType
-        tab.primaryKeys = Lists.newArrayList();
-        cmeta = new HdfsColMeta("customerregister_id", false
-                , true, DataType.createVarChar(150));
-        tab.cols.add(IDataxProcessor.TableMap.getCMeta(cmeta));
-        tab.primaryKeys.add(cmeta.getName());
-
-        cmeta = new HdfsColMeta("waitingorder_id", false, true
-                , DataType.createVarChar(150));
-        tab.cols.add(IDataxProcessor.TableMap.getCMeta(cmeta));
-        tab.primaryKeys.add(cmeta.getName());
-
-        cmeta = new HdfsColMeta("kind"
-                , true, false, DataType.getType(JDBCTypes.BIGINT));
-        tab.cols.add(IDataxProcessor.TableMap.getCMeta(cmeta));
-
-        cmeta = new HdfsColMeta(keyCreateTime
-                , true, false, DataType.getType(JDBCTypes.BIGINT));
-        tab.cols.add(IDataxProcessor.TableMap.getCMeta(cmeta));
-
-        cmeta = new HdfsColMeta("last_ver"
-                , true, false, DataType.getType(JDBCTypes.BIGINT));
-        tab.cols.add(IDataxProcessor.TableMap.getCMeta(cmeta));
+        PaimonSelectedTab tab = PaimonTestUtils.createPaimonSelectedTab();
 
         IDataxProcessor.TableMap tabMap = new IDataxProcessor.TableMap(tab); //IDataxProcessor.TableMap.create(targetTableName, colMetas);
         //   TestDataXDaMengWriter.setPlaceholderReader();
@@ -92,7 +66,7 @@ public class TestDataxPaimonWriterRealReal {
 
         IDataxReader dataxReader = EasyMock.mock("dataXReader", IDataxReader.class);
         EasyMock.expect(dataXProcessor.getReader(null)).andReturn(dataxReader);
-        EasyMock.expect(dataxReader.getSelectedTab(targetTableName)).andReturn(tab);
+        EasyMock.expect(dataxReader.getSelectedTab(tab.getName())).andReturn(tab);
         // File createDDLDir = folder.newFolder();// new File(".");
         // File createDDLFile = null;
         try {
@@ -109,7 +83,15 @@ public class TestDataxPaimonWriterRealReal {
                 Assert.assertEquals(testDataXName, dataXName);
                 return dataXProcessor;
             };
-            EasyMock.replay(dataXProcessor, dataxReader);
+
+            EasyMock.expect(dataXProcessor.getRecordTransformerRulesAndPluginStore(null, tab.getName()))
+                    .andReturn(Pair.of(Collections.emptyList(), null)).anyTimes();
+            final int taskId = 999;
+            IExecChainContext execContext = EasyMock.mock("execContext", IExecChainContext.class);
+            EasyMock.expect(execContext.getTaskId()).andReturn(taskId);
+            EasyMock.expect(execContext.getProcessor()).andReturn(dataXProcessor).anyTimes();
+
+            EasyMock.replay(dataXProcessor, dataxReader, execContext);
 //            String[] jdbcUrl = new String[1];
 //            writer.getDataSourceFactory().getDbConfig().vistDbURL(false, (a, b, url) -> {
 //                jdbcUrl[0] = url;
@@ -124,9 +106,18 @@ public class TestDataxPaimonWriterRealReal {
                 return cfg;
             });
             Assert.assertTrue("isGenerateCreateDDLSwitchOff shall be false", writer.isGenerateCreateDDLSwitchOff());
-            WriterTemplate.realExecuteDump(testDataXName, wjson, writer);
 
-            EasyMock.verify(dataXProcessor, dataxReader);
+            EntityName entity = EntityName.create(writer.catalog.getDBName().get(), tab.getName());
+            IRemoteTaskPreviousTrigger previousTrigger = writer.createPreExecuteTask(execContext, entity, tab);
+            previousTrigger.run();
+
+            IRemoteTaskPostTrigger postTask = writer.createPostTask(execContext, entity, tab, null);
+
+            WriterTemplate.realExecuteDump(taskId, testDataXName, wjson, writer);
+
+            postTask.run();
+
+            EasyMock.verify(dataXProcessor, dataxReader, execContext);
         } finally {
             //   FileUtils.deleteQuietly(createDDLFile);
         }

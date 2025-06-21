@@ -10,6 +10,8 @@ import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
+import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.SchemaBuilderSetter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.CoreOptions;
@@ -33,9 +35,13 @@ import java.util.function.Function;
  * @see org.apache.paimon.CoreOptions#COMPACTION_MIN_FILE_NUM
  **/
 public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBuilderSetter {
+    // WRITE_ONLY
+    @FormField(ordinal = 7, advance = true, type = FormFieldType.ENUM, validate = {Validator.require})
+    public Boolean writeOnly;
 
-    @FormField(ordinal = 1, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer minFileNum;
+
 
 //    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
 //    public Integer maxFileNum;
@@ -58,7 +64,7 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
     public Duration optimizationInterval;
 
     @Override
-    public void initializeSchemaBuilder(Schema.Builder schemaBuilder) {
+    public void initializeSchemaBuilder(Schema.Builder schemaBuilder, PaimonSelectedTab tab) {
         DefaultDescriptor desc = (DefaultDescriptor) this.getDescriptor();
         desc.opts.setTarget((field, val) -> {
             schemaBuilder.option(field.key(), String.valueOf(val));
@@ -68,7 +74,7 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
 
     @TISExtension
     public static final class DefaultDescriptor extends Descriptor<PaimonCompaction> {
-        Options<PaimonCompaction, ConfigOption> opts;
+        PaimonOptions<PaimonCompaction> opts;
 
         public DefaultDescriptor() {
             super();
@@ -82,6 +88,7 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
             opts.add("minFileNum", TISAssistProp.create(CoreOptions.COMPACTION_MIN_FILE_NUM).overwriteLabel(dftLableRewrite));
             // opts.add("maxFileNum", TISAssistProp.create(CoreOptions.COMPACTION_MAX_FILE_NUM).overwriteLabel(dftLableRewrite));
 
+            opts.add("writeOnly", TISAssistProp.create(CoreOptions.WRITE_ONLY).overwriteLabel(dftLableRewrite));
             opts.add("sizeAmplificationPercent", TISAssistProp.create(CoreOptions.COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT).overwriteLabel("放大比例"));
             opts.add("sizeRatio", TISAssistProp.create(CoreOptions.COMPACTION_SIZE_RATIO).overwriteLabel(dftLableRewrite));
             OverwriteProps optimizationIntervalOverwrite = new OverwriteProps();
