@@ -37,21 +37,21 @@
                 </exclusion>
             </exclusions>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.apache.flink</groupId>-->
-<!--            <artifactId>flink-cdc-common</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.flink</groupId>-->
+        <!--            <artifactId>flink-cdc-common</artifactId>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.flink</groupId>-->
-<!--            <artifactId>flink-cdc-composer-tis</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.flink</groupId>-->
+        <!--            <artifactId>flink-cdc-composer-tis</artifactId>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.flink</groupId>-->
-<!--            <artifactId>flink-cdc-runtime</artifactId>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.flink</groupId>-->
+        <!--            <artifactId>flink-cdc-runtime</artifactId>-->
 
-<!--        </dependency>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.qlangtech.tis.plugins</groupId>
             <artifactId>tis-scala-compiler</artifactId>
@@ -61,7 +61,7 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-cdc-pipeline-connector-paimon-tis</artifactId>
             <version>${flink.cdc.version}</version>
-<!--            <classifier>shaded</classifier>-->
+            <!--            <classifier>shaded</classifier>-->
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hive</groupId>

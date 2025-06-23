@@ -1,6 +1,7 @@
 package com.qlangtech.tis.plugin.paimon.datax;
 
 import com.alibaba.citrus.turbine.Context;
+import com.alibaba.datax.core.job.ISourceTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.TIS;
@@ -32,6 +33,7 @@ import com.qlangtech.tis.plugin.datax.HdfsWriterDescriptor;
 import com.qlangtech.tis.plugin.datax.common.AutoCreateTable;
 import com.qlangtech.tis.plugin.datax.common.AutoCreateTable.BasicDescriptor;
 import com.qlangtech.tis.plugin.datax.transformer.RecordTransformerRules;
+import com.qlangtech.tis.plugin.ds.IInitWriterTableExecutor;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog;
@@ -40,6 +42,7 @@ import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.hook.PostExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.hook.PreExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
+import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonUtils;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
 import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
@@ -68,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -81,7 +85,7 @@ import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-15 14:56
  **/
-public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware, IDataXBatchPost {
+public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSetter, KeyedPluginStore.IPluginKeyAware, IDataXBatchPost, IInitWriterTableExecutor {
 
     static {
         try {
@@ -200,6 +204,16 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         return true;
     }
 
+    @Override
+    public AutoCreateTable getAutoCreateTableCanNotBeNull() {
+        return Objects.requireNonNull(this.autoCreateTable, "autoCreateTable can not be null");
+    }
+
+    @Override
+    public void initWriterTable(ISourceTable sourceTable, String sinkTargetTabName, List<String> jdbcUrls) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
     @FormField(ordinal = 13, advance = true, validate = {Validator.require})
     public ChangelogProducer changelog;
 
@@ -245,7 +259,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         this.compaction.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.snapshot.initializeSchemaBuilder(tabSchemaBuilder, tab);
 
-
+        tab.partition.initializeSchemaBuilder(tabSchemaBuilder, tab);
         tab.sequenceField.initializeSchemaBuilder(tabSchemaBuilder, tab);
     }
 
@@ -280,17 +294,45 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         return this.catalog.createCatalog(this.dataXName);
     }
 
+
+    public boolean executeIfTableNotExist(EntityName entity, Consumer<Catalog> process) {
+        try (Catalog catalog = this.createCatalog()) {
+            // 判断表是否存在
+            if (!PaimonUtils.tableExists(catalog, entity.getDbName(), entity.getTabName()).getKey()) {
+                process.accept(catalog);
+                return false;
+//                // 创建新表
+//                Optional<RecordTransformerRules> transformerRules = getRecordTransformerRules();
+//                List<PaimonColumn> paimonCols = tab.getPaimonCols(transformerRules);
+//                final IDataxReader reader = execContext.getProcessor().getReader(null);
+//                SourceColMetaGetter sourceColMetaGetter =
+//                        paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
+//                this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab, sourceColMetaGetter);
+            } else {
+                // 表已经存在
+                return true;
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public PaimonTableWriter createWriter(Integer taskId, Table table) {
         return Objects.requireNonNull(this.paimonWriteMode).createWriter(taskId, table);
     }
 
     public Function<PaimonSelectedTab, Map<String, String>> createTabOpts() {
         return (tab) -> {
-            Builder schemaBuilder = new Builder();
-            initializeSchemaBuilder(schemaBuilder, tab);
-            Schema schema = schemaBuilder.build();
-            Map<String, String> tableOptions = schema.options();
-            return tableOptions;
+            try {
+                Builder schemaBuilder = new Builder();
+                initializeSchemaBuilder(schemaBuilder, tab);
+                Schema schema = schemaBuilder.build();
+                Map<String, String> tableOptions = schema.options();
+                return tableOptions;
+            } catch (Exception e) {
+                throw new RuntimeException("table:" + tab.getName(), e);
+            }
         };
     }
 
@@ -343,9 +385,17 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
 
     @Override
     public EntityName parseEntity(ISelectedTab tab) {
+        return parseEntity(tab.getName());
+    }
+
+
+    public EntityName parseEntity(String tabName) {
+        if (StringUtils.isEmpty(tabName)) {
+            throw new IllegalArgumentException("param tabName can not be null");
+        }
         Optional<String> dbName = this.catalog.getDBName();
-        return dbName.map((name) -> EntityName.create(name, tab.getEntityName().getTabName()))
-                .orElse(tab.getEntityName());
+        return dbName.map((db) -> EntityName.create(db, this.autoCreateTable.appendTabPrefix(tabName)))
+                .orElseThrow(() -> new IllegalStateException("catalog must have dbName"));
     }
 
     @Override
@@ -422,7 +472,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
 
         @Override
         public boolean isRdbms() {
-            return true;
+            return false;
         }
 
         @Override

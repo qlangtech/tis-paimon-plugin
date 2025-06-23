@@ -19,6 +19,8 @@ import org.apache.paimon.table.sink.BatchTableWrite;
 import org.apache.paimon.table.sink.BatchWriteBuilder;
 import org.apache.paimon.table.sink.CommitMessage;
 import org.apache.paimon.table.sink.CommitMessageSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +42,7 @@ public class BatchInsertWriteMode extends WriteMode {
     }
 
     static class PaimonBatchTableWrite implements PaimonTableWriter {
+        private static final Logger logger = LoggerFactory.getLogger(PaimonBatchTableWrite.class);
         private final BatchTableWrite write;
         private final BatchWriteBuilder writeBuilder;
         private final FileIO fileIO;
@@ -83,6 +86,7 @@ public class BatchInsertWriteMode extends WriteMode {
 
         @Override
         public void offlineFlushCache() throws Exception {
+
             List<CommitMessage> commitMessages = Lists.newArrayList();
             FileStatus[] fileStatuses = this.fileIO.listFiles(taskBatchRoot(), false);
             for (FileStatus stat : fileStatuses) {
@@ -94,12 +98,13 @@ public class BatchInsertWriteMode extends WriteMode {
             if (CollectionUtils.isEmpty(commitMessages)) {
                 throw new IllegalStateException("commitMessages can not be empty");
             }
-
+            logger.info("batch commit files, commit message size:" + commitMessages.size());
             BatchTableCommit commit = null;
             try {
                 commit = writeBuilder.newCommit();
 
                 commit.commit(commitMessages);
+                logger.info("batch commit success");
                 this.fileIO.delete(taskBatchRoot(), true);
             } catch (Exception e) {
                 commit.abort(commitMessages);

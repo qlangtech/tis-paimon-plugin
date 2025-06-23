@@ -13,10 +13,12 @@ import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSequenceFields;
 import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.schema.Schema.Builder;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author: 百岁（baisui@qlangtech.com）
@@ -25,6 +27,7 @@ import java.util.List;
 public class PaimonSequenceFieldsOn extends PaimonSequenceFields {
 
     public static final String FIELD_SORT_ORDER = "sortOrder";
+    public static final String FIELD_FIELD = "field";
 
     @FormField(ordinal = 1, type = FormFieldType.ENUM, validate = {Validator.require})
     public List<String> field;
@@ -61,7 +64,7 @@ public class PaimonSequenceFieldsOn extends PaimonSequenceFields {
 
             if (CollectionUtils.isNotEmpty(fields) && !CollectionUtils.isSubCollection(fields, pks)) {
                 msgHandler.addFieldError(context
-                        , FIELD_SORT_ORDER
+                        , FIELD_FIELD
                         , "按照Paimon表设置规则，sequence键须要包含在主键中(" + String.join(",", pks) + ")");
                 return false;
             }
@@ -71,10 +74,20 @@ public class PaimonSequenceFieldsOn extends PaimonSequenceFields {
         public Desc() {
             super();
             this.opts = PaimonPropAssist.createOpts(this);
+            
+            Function<String, String> labelRewrite = (label) -> {
+                return StringUtils.removeStart(label, "sequence.");
+            };
+
             OverwriteProps fieldPropOverWrite = new OverwriteProps();
             fieldPropOverWrite.setAppendHelper("\n 一个单调递增的字段（如时间戳、版本号），用于解决更新冲突。当主键相同时");
-            opts.add("field", CoreOptions.SEQUENCE_FIELD, fieldPropOverWrite);
-            opts.add(FIELD_SORT_ORDER, CoreOptions.SEQUENCE_FIELD_SORT_ORDER);
+            fieldPropOverWrite.setLabelRewrite(labelRewrite);
+            opts.add(FIELD_FIELD, CoreOptions.SEQUENCE_FIELD, fieldPropOverWrite);
+
+            OverwriteProps sortOverWrite = new OverwriteProps();
+            sortOverWrite.setLabelRewrite(labelRewrite);
+
+            opts.add(FIELD_SORT_ORDER, CoreOptions.SEQUENCE_FIELD_SORT_ORDER, sortOverWrite);
         }
     }
 }

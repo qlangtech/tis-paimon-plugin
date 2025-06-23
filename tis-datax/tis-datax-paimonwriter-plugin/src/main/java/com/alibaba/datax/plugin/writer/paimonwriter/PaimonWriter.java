@@ -15,13 +15,12 @@ import com.qlangtech.tis.datax.impl.DataxProcessor;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonColumn;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonUtils;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.paimon.catalog.Catalog;
-import org.apache.paimon.catalog.Catalog.TableNotExistException;
-import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.table.Table;
 import org.slf4j.Logger;
@@ -161,7 +160,7 @@ public class PaimonWriter extends Writer {
 
 
                 try (Catalog catalog = paimonWriter.createCatalog()) {
-                    Pair<Boolean, Table> tabExist = tableExists(catalog, dbName, tableName);
+                    Pair<Boolean, Table> tabExist = PaimonUtils.tableExists(catalog, dbName, tableName);
                     if (!tabExist.getKey()) {
                         throw new IllegalStateException(dbName.concat("." + tableName) + " must be exist");
                     } else {
@@ -227,24 +226,6 @@ public class PaimonWriter extends Writer {
             }
         }
 
-
-        public static Pair<Boolean, Table> tableExists(Catalog catalog, String dbName, String tableName) {
-            if (StringUtils.isEmpty(dbName)) {
-                throw new IllegalArgumentException("dbName can not be null null");
-            }
-            if (StringUtils.isEmpty(tableName)) {
-                throw new IllegalArgumentException("tableName can not be null null");
-            }
-            Identifier identifier = Identifier.create(dbName, tableName);
-            try {
-                return Pair.of(true, Objects.requireNonNull(catalog, "catalog can not be null")
-                        .getTable(identifier));
-            } catch (TableNotExistException e) {
-                return Pair.of(false, null);
-            }
-//            boolean exists = catalog.tableExists(identifier);
-//            return exists;
-        }
 
         private void kerberosAuthentication(String kerberosPrincipal, String kerberosKeytabFilePath, org.apache.hadoop.conf.Configuration hadoopConf) {
             if (StringUtils.isNotBlank(kerberosPrincipal) && StringUtils.isNotBlank(kerberosKeytabFilePath)) {

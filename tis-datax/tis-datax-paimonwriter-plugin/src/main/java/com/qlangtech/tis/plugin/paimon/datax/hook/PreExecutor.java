@@ -1,14 +1,19 @@
 package com.qlangtech.tis.plugin.paimon.datax.hook;
 
 import com.alibaba.datax.plugin.writer.paimonwriter.PaimonWriter.Task;
+import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.datax.IDataxReader;
+import com.qlangtech.tis.datax.SourceColMetaGetter;
 import com.qlangtech.tis.exec.IExecChainContext;
 import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPreviousTrigger;
 import com.qlangtech.tis.plugin.datax.transformer.RecordTransformerRules;
+import com.qlangtech.tis.plugin.ds.ColumnMetaData;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonColumn;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.schema.Schema;
@@ -46,18 +51,30 @@ public class PreExecutor implements IRemoteTaskPreviousTrigger {
 
 
         SessionStateUtil.execute(paimonWriter.catalog, () -> {
-            try (Catalog catalog = paimonWriter.createCatalog()) {
-                // 判断表是否存在
-                if (!Task.tableExists(catalog, this.entity.getDbName(), this.entity.getTabName()).getKey()) {
-                    // 创建新表
-                    Optional<RecordTransformerRules> transformerRules = getRecordTransformerRules();
-                    List<PaimonColumn> paimonCols = tab.getPaimonCols(transformerRules);
-                    this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab);
-                }
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            paimonWriter.executeIfTableNotExist(this.entity, (catalog) -> {
+                // 创建新表
+                Optional<RecordTransformerRules> transformerRules = getRecordTransformerRules();
+                List<PaimonColumn> paimonCols = tab.getPaimonCols(transformerRules);
+                final IDataxReader reader = execContext.getProcessor().getReader(null);
+                SourceColMetaGetter sourceColMetaGetter =
+                        paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
+                this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab, sourceColMetaGetter);
+            });
+//            try (Catalog catalog = paimonWriter.createCatalog()) {
+//                // 判断表是否存在
+//                if (!Task.tableExists(catalog, this.entity.getDbName(), this.entity.getTabName()).getKey()) {
+//                    // 创建新表
+//                    Optional<RecordTransformerRules> transformerRules = getRecordTransformerRules();
+//                    List<PaimonColumn> paimonCols = tab.getPaimonCols(transformerRules);
+//                    final IDataxReader reader = execContext.getProcessor().getReader(null);
+//                    SourceColMetaGetter sourceColMetaGetter =
+//                            paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
+//                    this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab, sourceColMetaGetter);
+//                }
+//
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
         });
 
 
@@ -73,15 +90,17 @@ public class PreExecutor implements IRemoteTaskPreviousTrigger {
     }
 
     private void createTable(Catalog catalog, String dbName, String tableName
-            , List<PaimonColumn> cols, PaimonSelectedTab tab) {
+            , List<PaimonColumn> cols, PaimonSelectedTab tab, SourceColMetaGetter sourceColMetaGetter) {
         List<String> pks = tab.getPrimaryKeys();
         List<String> partKeys = tab.getPartitionKeys();
         Schema.Builder schemaBuilder = Schema.newBuilder();
         Objects.requireNonNull(this.paimonWriter, "paimonWriter can not be null")
                 .initializeSchemaBuilder(schemaBuilder, tab);
-
+        final TableMap tabMapper = new TableMap(tab);
+        ColumnMetaData colMeta = null;
         for (PaimonColumn columnConfig : cols) {
-            schemaBuilder.column(columnConfig.getName(), columnConfig.type, null);
+            colMeta = sourceColMetaGetter.getColMeta(tabMapper, columnConfig.getName());
+            schemaBuilder.column(columnConfig.getName(), columnConfig.type, colMeta != null ? colMeta.getComment() : null);
         }
         if (CollectionUtils.isNotEmpty(pks)) {
             schemaBuilder.primaryKey(pks);
@@ -90,7 +109,7 @@ public class PreExecutor implements IRemoteTaskPreviousTrigger {
         Schema schema = schemaBuilder.build();
         if (CollectionUtils.isNotEmpty(partKeys)) {
             schemaBuilder.partitionKeys(partKeys);
-            schema = schemaBuilder.option("metastore.partitioned-table", "true").build();
+            schema = schemaBuilder.option(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true").build();
         }
 
         Identifier identifier = Identifier.create(dbName, tableName);

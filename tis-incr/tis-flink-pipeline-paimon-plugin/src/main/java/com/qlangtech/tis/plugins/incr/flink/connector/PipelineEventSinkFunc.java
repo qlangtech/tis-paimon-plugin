@@ -5,6 +5,8 @@ import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
 import com.qlangtech.tis.async.message.client.consumer.IFlinkColCreator;
 import com.qlangtech.tis.config.hive.IHiveConnGetter;
 import com.qlangtech.tis.datax.IDataxProcessor;
+import com.qlangtech.tis.datax.IDataxReader;
+import com.qlangtech.tis.datax.SourceColMetaGetter;
 import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.plugin.datax.transformer.UDFDefinition;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
@@ -20,6 +22,7 @@ import com.qlangtech.tis.realtime.SelectedTableTransformerRules;
 import com.qlangtech.tis.realtime.TabSinkFunc;
 import com.qlangtech.tis.realtime.dto.DTOStream;
 import com.qlangtech.tis.realtime.transfer.DTO;
+import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -79,8 +82,9 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
     private final PaimonPipelineSinkFactory pipelineSinkFactory;
     private final List<ISelectedTab> tabs;
 
-    protected final Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper;
+    protected final Map<String /**sink tabName 别名*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper;
     private final Optional<String> sinkDBName;
+    private final Map<String, TableId> tab2TableID;
 
     public PipelineEventSinkFunc(IDataxProcessor dataxProcessor
             , PaimonPipelineSinkFactory pipelineSinkFactory //
@@ -95,18 +99,22 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
         this.pipelineSinkFactory = Objects.requireNonNull(pipelineSinkFactory, "pipelineSinkFactory can not be null");
         this.tabs = Objects.requireNonNull(tabs, "tabs can not be null");
         this.sinkDBName = paimonWriter.catalog.getDBName();
-        Builder<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapperBuilder = ImmutableMap.builder();
+        Builder<String /**sinkTabName 别名*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapperBuilder = ImmutableMap.builder();
         Optional<SelectedTableTransformerRules> transformerOpt = null;
+        ImmutableMap.Builder<String, TableId> tab2TableIDBuilder = ImmutableMap.builder();
+        EntityName targetEntityName = null;
         for (ISelectedTab selTab : this.tabs) {
-
+            targetEntityName = paimonWriter.parseEntity(selTab);
+            tab2TableIDBuilder.put(selTab.getName(), TableId.tableId(targetEntityName.getDbName(), targetEntityName.getTableName()));
             transformerOpt = SelectedTableTransformerRules.createTransformerRules(dataxProcessor.identityValue()
                     , selTab
                     , Objects.requireNonNull(sourceFlinkColCreator, "sourceFlinkColCreator can not be null"));
 
-            sourceColsMetaMapperBuilder.put(selTab.getName()
+            sourceColsMetaMapperBuilder.put(targetEntityName.getTableName()
                     , Pair.of(FlinkCol.createSourceCols(null, selTab, sourceFlinkColCreator, transformerOpt)
                             , transformerOpt.map((t) -> t.getTransformerRules().getTransformerUDFs()).orElse(null)));
         }
+        this.tab2TableID = tab2TableIDBuilder.build();
         sourceColsMetaMapper = sourceColsMetaMapperBuilder.build();
     }
 
@@ -120,12 +128,15 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
                     = sourceStream.getStream()
                     .filter(new DTOFilter(true, Collections.emptyList()))
                     .name("skip_" + UPDATE_BEFORE).setParallelism(this.sinkTaskParallelism)
-                    .map(new DTO2FlinkPipelineEventMapper(sinkDBName, this.sourceColsMetaMapper), outputType)
+                    .map(new DTO2FlinkPipelineEventMapper(sinkDBName, this.sourceColsMetaMapper, this.tab2TableID), outputType)
                     .name(dataxProcessor.identityValue() + "_dto2Event")
                     .setParallelism(this.sinkTaskParallelism);
 
+            IDataxReader reader = this.dataxProcessor.getReader(null);
+
+            SourceColMetaGetter sourceColMetaGetter = paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
             result = outputOperator.process(new SchemaEmitterFunction(
-                            sinkDBName, paimonWriter.createTabOpts(), this.tabs, this.sourceColsMetaMapper), outputType)
+                            sinkDBName, paimonWriter, this.tabs, this.sourceColsMetaMapper, sourceColMetaGetter), outputType)
                     .name("schema_emitter");
             // outputOperator;
         } else if (sourceStream.clazz == org.apache.flink.cdc.common.event.Event.class) {

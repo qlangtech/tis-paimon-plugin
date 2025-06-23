@@ -1,9 +1,13 @@
 package com.qlangtech.tis.plugins.incr.flink.connector;
 
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
+import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.datax.SourceColMetaGetter;
 import com.qlangtech.tis.plugin.datax.transformer.UDFDefinition;
 import com.qlangtech.tis.plugin.ds.CMeta;
+import com.qlangtech.tis.plugin.ds.ColumnMetaData;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
 import org.apache.commons.collections.CollectionUtils;
@@ -35,7 +39,7 @@ import java.util.function.Function;
 public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
     private Set<TableId> alreadySendCreateTableTables = new HashSet<>();
     private Map<String, CreateTableEvent> createTableEventCache = new HashMap<>();
-    private Map<String, String> tableOpts;
+    // private Map<String, String> tableOpts;
     // private List<ISelectedTab> tabs;
 
     /**
@@ -43,28 +47,72 @@ public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
      * @param tabs
      * @param sourceColsMetaMapper
      */
-    public SchemaEmitterFunction(Optional<String> sinkDBName, Function<PaimonSelectedTab, Map<String, String>> tableOptsCreator
-            , List<ISelectedTab> tabs, Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper) {
-        // this.tabs = tabs;
+    public SchemaEmitterFunction(Optional<String> sinkDBName, DataxPaimonWriter paimonWriter
+            , List<ISelectedTab> tabs
+            , Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper
+            , SourceColMetaGetter sourceColMetaGetter) {
+        Function<PaimonSelectedTab, Map<String, String>> tableOptsCreator = paimonWriter.createTabOpts();
         TableId tableId = null;
+        EntityName entityName = null;
         for (ISelectedTab tab : tabs) {
-            EntityName entityName = tab.getEntityName();
-            tableId = Objects.requireNonNull(sinkDBName, "sinkDBName can not be null").isEmpty()
-                    ? TableId.tableId(entityName.getTableName())
-                    : TableId.tableId(sinkDBName.get(), entityName.getTableName());
-            createTableEventCache.put(tableId.getTableName()
+
+
+            entityName = paimonWriter.parseEntity(tab);
+//            Objects.requireNonNull(sinkDBName, "sinkDBName can not be null").isEmpty()
+//                    ? tab.getEntityName() : EntityName.create(sinkDBName.get(), tab.getName());
+//            paimonWriter.autoCreateTable.appendTabPrefix()
+            TableMap tableMap = new TableMap(tab);
+            tableId = TableId.tableId(entityName.getDbName(), entityName.getTableName());
+//                    ? TableId.tableId(entityName.getTableName())
+//                    : TableId.tableId(sinkDBName.get(), entityName.getTableName());
+            createTableEventCache.put(tab.getName()
                     , new CreateTableEvent(tableId
                             , parseDDL(tableId, tableOptsCreator.apply((PaimonSelectedTab) tab), (PaimonSelectedTab) tab
                             , Objects.requireNonNull(sourceColsMetaMapper.get(tableId.getTableName())
-                                    , "table:" + tableId + " relevant flinkCols can not be null").getKey())));
+                                    , "table:" + tableId + " relevant flinkCols can not be null").getKey()
+                            , (colName) -> {
+//                                if (tableExist) {
+//                                    // 如果表已经存在情况下不能返回表的列comment内存，不然后续比较已经存在的schema流程会出错
+//                                    // 由于paimoin 在获取已经存在的schema 会从 hdfs中获取 col元数据内容如下：
+//                                    /**
+//                                     * <pre>
+//                                     *    {
+//                                     *     "id" : 2,
+//                                     *     "name" : "simple_code",
+//                                     *     "type" : "VARCHAR(10)",
+//                                     *     "description" : "为全局单号的简化号（后n位）"
+//                                     *   }
+//                                     *   但是通过 @see SchemaManager#schema json 反序列化后会丢失列comment ，导致checkSchemaForExternalTable的 ‘newSchema.rowType().equalsIgnoreFieldId(existsSchema.rowType())’ 比较失败
+//                                     *      public TableSchema schema(long id) {
+//                                     *         return TableSchema.fromPath(fileIO, toSchemaPath(id));
+//                                     *     }
+//                                     * </pre>
+//                                     */
+//
+//                                    /**
+//                                     * <pre>
+//                                     *  at org.apache.paimon.schema.SchemaManager.checkSchemaForExternalTable(SchemaManager.java:257) ~[paimon-bundle-1.1.1.jar:1.1.1]
+//                                     * 	at org.apache.paimon.schema.SchemaManager.createTable(SchemaManager.java:210) ~[paimon-bundle-1.1.1.jar:1.1.1]
+//                                     * 	at org.apache.paimon.hive.HiveCatalog.lambda$createTableImpl$25(HiveCatalog.java:1010) ~[paimon-bundle-1.1.1.jar:1.1.1]
+//                                     * 	at org.apache.paimon.hive.HiveCatalog.runWithLock(HiveCatalog.java:1579) ~[paimon-bundle-1.1.1.jar:1.1.1]
+//                                     * 	at org.apache.paimon.hive.HiveCatalog.createTableImpl(HiveCatalog.java:1006) ~[paimon-bundle-1.1.1.jar:1.1.1]
+//                                     * 	at org.apache.paimon.catalog.AbstractCatalog.createTable(AbstractCatalog.java:356) ~[paimon-bundle-1.1.1.jar:1.1.
+//                                     * </pre>
+//                                     */
+//                                    return null;
+//                                }
+                                ColumnMetaData colMeta = sourceColMetaGetter.getColMeta(tableMap, colName);
+                                return colMeta != null ? colMeta.getComment() : null;
+                            })));
         }
-        if (MapUtils.isEmpty(tableOpts)) {
-            throw new IllegalArgumentException("tableOpts can not be empty");
-        }
-        this.tableOpts = tableOpts;
+//        if (MapUtils.isEmpty(tableOpts)) {
+//            throw new IllegalArgumentException("tableOpts can not be empty");
+//        }
+//        this.tableOpts = tableOpts;
     }
 
-    private static Schema parseDDL(TableId tableId, Map<String, String> tableOpts, PaimonSelectedTab tab, List<FlinkCol> cols) {
+    private static Schema parseDDL(TableId tableId, Map<String, String> tableOpts, PaimonSelectedTab tab
+            , List<FlinkCol> cols, Function<String, String> sourceColCommentGetter) {
         // Table table = parseDdl(ddlStatement, tableId);
 
         //List<CMeta> columns = tab.getCols();
@@ -79,7 +127,7 @@ public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
             schemaBuilder.physicalColumn(
                     column.name,
                     dataType,
-                    null,
+                    sourceColCommentGetter.apply(column.name),
                     null);
         }
         schemaBuilder.comment(null);

@@ -7,6 +7,8 @@ import com.qlangtech.tis.extension.Describable;
  *
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-06-21 01:02
+ * @see com.qlangtech.tis.plugin.paimon.datax.sequence.PaimonSequenceFieldsOn
+ * @see com.qlangtech.tis.plugin.paimon.datax.sequence.PaimonSequenceFieldsOff
  **/
 public abstract class PaimonSequenceFields implements Describable<PaimonSequenceFields>, SchemaBuilderSetter {
 

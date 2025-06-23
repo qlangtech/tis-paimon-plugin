@@ -10,7 +10,6 @@ import com.qlangtech.tis.realtime.FilterUpdateBeforeEvent.DTOFilter;
 import com.qlangtech.tis.realtime.transfer.DTO;
 import com.qlangtech.tis.realtime.transfer.DTO.EventType;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.cdc.common.data.RecordData;
 import org.apache.flink.cdc.common.event.DataChangeEvent;
@@ -32,24 +31,16 @@ import static com.qlangtech.tis.realtime.transfer.DTO.EventType.UPDATE_BEFORE;
 public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChangeEvent, Event> {
     private transient Map<String, TISBinaryRecordDataGenerator> tab2GenMapper;
     private final Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper;
-    private final String sinkDBName;
+    // private final String sinkDBName;
+    private final Map<String, TableId> tab2TableID;
 
     public DTO2FlinkPipelineEventMapper(Optional<String> dbName
-            , Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper) {
+            , Map<String /**tabName*/, Pair<List<FlinkCol>, List<UDFDefinition>>> sourceColsMetaMapper
+            , Map<String, TableId> tab2TableID) {
         super(DTOConvertTo.FlinkCDCPipelineEvent);
-        this.sourceColsMetaMapper = sourceColsMetaMapper;
-        this.sinkDBName = dbName.orElse(null);
-//        this.tab2GenMapper
-//                = sourceColsMetaMapper.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> {
-//            List<FlinkCol> cols = e.getValue();
-//            org.apache.flink.cdc.common.types.DataType[] dataTypes = new org.apache.flink.cdc.common.types.DataType[cols.size()];
-//            for (int idx = 0; idx < cols.size(); idx++) {
-//                FlinkCol flinkCol = cols.get(idx);
-//                dataTypes[idx] =
-//                        flinkCol.flinkCDCPipelineEventProcess.getDataType();
-//            }
-//            return new BinaryRecordDataGenerator(dataTypes);
-//        }));
+        this.sourceColsMetaMapper = Objects.requireNonNull(sourceColsMetaMapper, "sourceColsMetaMapper can not be null");
+        // this.sinkDBName = dbName.orElse(null);
+        this.tab2TableID = Objects.requireNonNull(tab2TableID, "tab2TableID can not be null");
     }
 
     @Override
@@ -92,9 +83,15 @@ public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChang
     protected DataChangeEvent createRowData(DTO dto) {
         DataChangeEvent changeEvent = null;
 
-        TableId tableId = StringUtils.isEmpty(sinkDBName)
-                ? TableId.tableId(dto.getTableName())
-                : TableId.tableId(sinkDBName, dto.getTableName());
+        TableId tableId = tab2TableID.get(dto.getTableName());
+        if (tableId == null) {
+            throw new IllegalStateException("table:" + dto.getTableName()
+                    + " relevant tableId can not be null,exist keys:" + String.join(",", tab2TableID.keySet()));
+        }
+
+//        TableId tableId = StringUtils.isEmpty(sinkDBName)
+//                ? TableId.tableId(dto.getTableName())
+//                : TableId.tableId(sinkDBName, dto.getTableName());
         Map<String, Object> beforeVals = dto.getBefore();
         Map<String, Object> afterVals = dto.getAfter();
 

@@ -65,7 +65,7 @@ public class TestDataxPaimonWriterRealReal {
 
 
         IDataxReader dataxReader = EasyMock.mock("dataXReader", IDataxReader.class);
-        EasyMock.expect(dataXProcessor.getReader(null)).andReturn(dataxReader);
+        EasyMock.expect(dataXProcessor.getReader(null)).andReturn(dataxReader).anyTimes();
         EasyMock.expect(dataxReader.getSelectedTab(tab.getName())).andReturn(tab);
         // File createDDLDir = folder.newFolder();// new File(".");
         // File createDDLFile = null;

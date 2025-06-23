@@ -10,6 +10,8 @@ import com.qlangtech.tis.plugin.paimon.datax.PaimonPartition;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.paimon.CoreOptions;
+import org.apache.paimon.schema.Schema.Builder;
 
 import java.util.List;
 
@@ -26,7 +28,16 @@ public class OnPaimonPartition extends PaimonPartition {
 
     @Override
     public List<String> getPartitionKeys() {
+        if (CollectionUtils.isEmpty(this.partitionPathFields)) {
+            throw new IllegalStateException("partitionPathFields can not be empty");
+        }
         return this.partitionPathFields;
+    }
+
+    @Override
+    public void initializeSchemaBuilder(Builder schemaBuilder, PaimonSelectedTab tab) {
+        schemaBuilder.option(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), Boolean.TRUE.toString());
+        // schemaBuilder.partitionKeys(getPartitionKeys());
     }
 
     @TISExtension

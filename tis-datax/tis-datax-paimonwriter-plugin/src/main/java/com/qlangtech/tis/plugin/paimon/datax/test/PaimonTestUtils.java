@@ -3,6 +3,7 @@ package com.qlangtech.tis.plugin.paimon.datax.test;
 import com.alibaba.datax.plugin.writer.hdfswriter.HdfsColMeta;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.plugin.datax.common.impl.NoneCreateTable;
 import com.qlangtech.tis.plugin.ds.DataType;
 import com.qlangtech.tis.plugin.ds.JDBCTypes;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
@@ -11,6 +12,7 @@ import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.changelog.ChangelogProducerOff;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.pt.OnPaimonPartition;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
@@ -51,6 +53,7 @@ public class PaimonTestUtils {
         compaction.sizeAmplificationPercent = org.apache.paimon.CoreOptions.COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT.defaultValue();
         compaction.sizeRatio = CoreOptions.COMPACTION_SIZE_RATIO.defaultValue();
         compaction.minFileNum = CoreOptions.COMPACTION_MIN_FILE_NUM.defaultValue();
+        compaction.writeOnly = false;
         writer.compaction = compaction;
 
         PaimonSnapshot snapshot = new PaimonSnapshot();
@@ -58,6 +61,9 @@ public class PaimonTestUtils {
         snapshot.retainedMin = org.apache.paimon.CoreOptions.SNAPSHOT_NUM_RETAINED_MIN.defaultValue();
         snapshot.timeRetained = org.apache.paimon.CoreOptions.SNAPSHOT_TIME_RETAINED.defaultValue();
         writer.snapshot = snapshot;
+
+        writer.autoCreateTable = new NoneCreateTable();
+        writer.changelog = new ChangelogProducerOff();
         //writer.autoCreateTable = AutoCreateTable.dft();
 
         return writer;
@@ -80,6 +86,9 @@ public class PaimonTestUtils {
         final String targetTableName = "customer_order_relation";
         PaimonSelectedTab tab = new PaimonSelectedTab();
         String keyCreateTime = "create_time";
+
+        tab.sequenceField = new com.qlangtech.tis.plugin.paimon.datax.sequence.PaimonSequenceFieldsOff();
+
         OnPaimonPartition pt = new OnPaimonPartition();
         pt.partitionPathFields = Lists.newArrayList(keyCreateTime);
         tab.partition = pt;

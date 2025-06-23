@@ -18,7 +18,8 @@ import java.util.Optional;
 public class PaimonAutoCreateTable extends ParamsAutoCreateTable<ColWrapper> {
 
     @Override
-    public CreateTableSqlBuilder createSQLDDLBuilder(DataxWriter rdbmsWriter, SourceColMetaGetter sourceColMetaGetter, TableMap tableMapper, Optional transformers) {
+    public CreateTableSqlBuilder createSQLDDLBuilder(DataxWriter rdbmsWriter
+            , SourceColMetaGetter sourceColMetaGetter, TableMap tableMapper, Optional transformers) {
         throw new UnsupportedOperationException();
     }
 

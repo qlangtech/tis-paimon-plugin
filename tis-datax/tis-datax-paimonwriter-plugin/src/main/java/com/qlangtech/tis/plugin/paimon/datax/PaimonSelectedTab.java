@@ -24,7 +24,6 @@ import org.apache.paimon.types.DataType;
 import org.apache.paimon.types.DataTypes;
 import org.apache.paimon.types.DateType;
 import org.apache.paimon.types.DoubleType;
-import org.apache.paimon.types.VarBinaryType;
 import org.apache.paimon.types.VarCharType;
 
 import java.sql.Date;
@@ -47,7 +46,7 @@ public class PaimonSelectedTab extends SelectedTab {
     @FormField(ordinal = 5, validate = {Validator.require})
     public PaimonSequenceFields sequenceField;
 
-    public List<String> getPartitionKeys() {
+    public final List<String> getPartitionKeys() {
         return this.partition.getPartitionKeys();
     }
 
@@ -185,7 +184,7 @@ public class PaimonSelectedTab extends SelectedTab {
 
                 @Override
                 public Pair<org.apache.paimon.types.DataType, Function<Column, Object>> blobType(com.qlangtech.tis.plugin.ds.DataType type) {
-                    return Pair.of(new VarBinaryType(type.getColumnSize()), Column::asBytes);
+                    return Pair.of(DataTypes.VARBINARY(type.getColumnSize()), Column::asBytes);
                 }
 
                 @Override

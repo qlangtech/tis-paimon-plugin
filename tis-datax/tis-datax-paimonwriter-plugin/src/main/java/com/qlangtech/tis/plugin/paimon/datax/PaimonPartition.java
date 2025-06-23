@@ -10,7 +10,7 @@ import java.util.List;
  * @see com.qlangtech.tis.plugin.paimon.datax.pt.OffPaimonPartition
  * @see com.qlangtech.tis.plugin.paimon.datax.pt.OnPaimonPartition
  **/
-public abstract class PaimonPartition implements Describable<PaimonPartition> {
+public abstract class PaimonPartition implements Describable<PaimonPartition> ,SchemaBuilderSetter {
 
     abstract public List<String> getPartitionKeys();
 }

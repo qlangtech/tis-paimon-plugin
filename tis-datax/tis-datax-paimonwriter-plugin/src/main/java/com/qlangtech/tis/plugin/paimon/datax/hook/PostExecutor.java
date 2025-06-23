@@ -1,15 +1,17 @@
 package com.qlangtech.tis.plugin.paimon.datax.hook;
 
-import com.alibaba.datax.plugin.writer.paimonwriter.PaimonWriter.Task;
 import com.qlangtech.tis.exec.IExecChainContext;
 import com.qlangtech.tis.fullbuild.indexbuild.IRemoteTaskPostTrigger;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonUtils;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
 import com.qlangtech.tis.sql.parser.tuple.creator.EntityName;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.table.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -25,6 +27,7 @@ public class PostExecutor implements IRemoteTaskPostTrigger {
     private final EntityName entity;
     private final PaimonSelectedTab tab;
     private final IExecChainContext execContext;
+    private static final Logger logger = LoggerFactory.getLogger(PostExecutor.class);
 
     public PostExecutor(IExecChainContext execContext, DataxPaimonWriter paimonWriter, EntityName entity, PaimonSelectedTab tab) {
         this.paimonWriter = Objects.requireNonNull(paimonWriter, "paimonWriter can not be null");
@@ -42,8 +45,9 @@ public class PostExecutor implements IRemoteTaskPostTrigger {
     public void run() {
         SessionStateUtil.execute(paimonWriter.catalog, () -> {
             try (Catalog catalog = paimonWriter.createCatalog()) {
+                logger.info("start batch commit paimon table:" + this.entity.getTabName());
                 // 判断表是否存在
-                Pair<Boolean, Table> existTab = Task.tableExists(catalog, this.entity.getDbName(), this.entity.getTabName());
+                Pair<Boolean, Table> existTab = PaimonUtils.tableExists(catalog, this.entity.getDbName(), this.entity.getTabName());
                 if (!existTab.getKey()) {
                     throw new IllegalStateException("table:" + entity.getFullName() + " must be exist");
                 }
