@@ -65,7 +65,7 @@ public class SchemaEmitterFunction extends ProcessFunction<Event, Event> {
             tableId = TableId.tableId(entityName.getDbName(), entityName.getTableName());
 //                    ? TableId.tableId(entityName.getTableName())
 //                    : TableId.tableId(sinkDBName.get(), entityName.getTableName());
-            createTableEventCache.put(tab.getName()
+            createTableEventCache.put(tableId.getTableName()
                     , new CreateTableEvent(tableId
                             , parseDDL(tableId, tableOptsCreator.apply((PaimonSelectedTab) tab), (PaimonSelectedTab) tab
                             , Objects.requireNonNull(sourceColsMetaMapper.get(tableId.getTableName())

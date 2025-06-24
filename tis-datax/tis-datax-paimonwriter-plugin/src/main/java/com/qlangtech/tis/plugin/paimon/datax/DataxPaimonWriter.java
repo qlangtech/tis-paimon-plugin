@@ -43,6 +43,7 @@ import com.qlangtech.tis.plugin.paimon.datax.hook.PostExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.hook.PreExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonUtils;
+import com.qlangtech.tis.plugin.paimon.datax.writebuffer.PaimonWriteBuffer;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.WriteMode.PaimonTableWriter;
 import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
@@ -179,6 +180,9 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     @FormField(ordinal = 1, validate = {Validator.require})
     public PaimonCatalog catalog;
 
+    @FormField(ordinal = 2, validate = {Validator.require})
+    public PaimonWriteBuffer writeBuffer;
+
     @FormField(ordinal = 6, type = FormFieldType.ENUM, validate = {Validator.require})
     public String storeFormat;
 
@@ -255,6 +259,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         }, this);
 
         this.changelog.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        this.writeBuffer.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.catalog.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.compaction.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.snapshot.initializeSchemaBuilder(tabSchemaBuilder, tab);

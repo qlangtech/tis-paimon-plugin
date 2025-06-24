@@ -2,7 +2,6 @@ package com.qlangtech.tis.plugin.paimon.catalog.cache;
 
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
-import com.qlangtech.tis.extension.util.AbstractPropAssist;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.extension.util.PropValFilter;
@@ -15,7 +14,6 @@ import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.options.CatalogOptions;
-import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.options.Options;
 
 import java.time.Duration;
@@ -47,6 +45,15 @@ public class CatalogCacheON extends CatalogCache {
     @FormField(ordinal = 6, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer snapshotMaxNumPerTable;
 
+    public static final PropValFilter paimonMemorySizeProcess = new PropValFilter() {
+        @Override
+        public Object apply(Object o) {
+            MemorySize ms = (MemorySize) o;
+            org.apache.paimon.options.MemorySize result = new org.apache.paimon.options.MemorySize(ms.getBytes());
+            return result;
+        }
+    };
+
     @Override
     public void setOptions(Options options) {
         options.set(CatalogOptions.CACHE_ENABLED, true);
@@ -72,32 +79,24 @@ public class CatalogCacheON extends CatalogCache {
             this.opts.add("partitionMaxNum"
                     , TISAssistProp.create(CatalogOptions.CACHE_PARTITION_MAX_NUM).overwriteLabel(dftLableRewrite));
 
-            final PropValFilter paimonMemorySizeProcess = new PropValFilter() {
-                @Override
-                public Object apply(Object o) {
-                    MemorySize ms = (MemorySize) o;
-                    org.apache.paimon.options.MemorySize result = new org.apache.paimon.options.MemorySize(ms.getBytes());
-                    return result;
-                }
-            };
 
-            OverwriteProps memoryOverwrite = new OverwriteProps();
-            memoryOverwrite.setLabelRewrite(dftLableRewrite);
-            memoryOverwrite.dftValConvert = (val) -> {
-                return MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
-            };
+//            OverwriteProps memoryOverwrite = new OverwriteProps();
+//            memoryOverwrite.setLabelRewrite(dftLableRewrite);
+//            memoryOverwrite.dftValConvert = (val) -> {
+//                return MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
+//            };
 
-            this.opts.add(KEY_FIELD_MANIFEST_SMALL_FIELD_MEMORY
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_MEMORY).setOverwriteProp(memoryOverwrite)
-                    , paimonMemorySizeProcess);
+            this.opts.addMemorySize(KEY_FIELD_MANIFEST_SMALL_FIELD_MEMORY
+                    , CatalogOptions.CACHE_MANIFEST_SMALL_FILE_MEMORY
+                    , (o) -> o.setLabelRewrite(dftLableRewrite));
 
-            this.opts.add("manifestSmallFileThreshold"
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_SMALL_FILE_THRESHOLD).setOverwriteProp(memoryOverwrite)
-                    , paimonMemorySizeProcess);
+            this.opts.addMemorySize("manifestSmallFileThreshold"
+                    , CatalogOptions.CACHE_MANIFEST_SMALL_FILE_THRESHOLD
+                    , (o) -> o.setLabelRewrite(dftLableRewrite));
 
-            this.opts.add("manifestMaxMemory"
-                    , TISAssistProp.create(CatalogOptions.CACHE_MANIFEST_MAX_MEMORY).setOverwriteProp(memoryOverwrite)
-                    , paimonMemorySizeProcess);
+            this.opts.addMemorySize("manifestMaxMemory"
+                    , CatalogOptions.CACHE_MANIFEST_MAX_MEMORY
+                    , (o) -> o.setLabelRewrite(dftLableRewrite));
 
             this.opts.add("snapshotMaxNumPerTable"
                     , TISAssistProp.create(CatalogOptions.CACHE_SNAPSHOT_MAX_NUM_PER_TABLE).overwriteLabel(dftLableRewrite));

@@ -6,8 +6,11 @@ import com.qlangtech.tis.extension.util.AbstractPropAssist;
 import com.qlangtech.tis.extension.util.OverwriteProps;
 import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.manage.common.Option;
+import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.ConfigOption;
+import org.apache.paimon.options.MemorySize;
 import org.apache.paimon.options.description.DescribedEnum;
 import org.apache.paimon.options.description.Description;
 import org.apache.paimon.options.description.HtmlFormatter;
@@ -17,6 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +82,23 @@ public class PaimonPropAssist<T extends Describable> extends AbstractPropAssist<
 
         public PaimonOptions(AbstractPropAssist<T, org.apache.paimon.options.ConfigOption> propsAssist) {
             super(propsAssist);
+        }
+
+        public void addMemorySize(String fieldName, ConfigOption<MemorySize> option) {
+            this.addMemorySize(fieldName, option, null);
+        }
+
+        public void addMemorySize(String fieldName, ConfigOption<MemorySize> option, Consumer<OverwriteProps> memoryOverwriteConsumer) {
+
+            OverwriteProps memoryOverwrite = new OverwriteProps();
+            memoryOverwrite.dftValConvert = (val) -> {
+                return com.qlangtech.tis.plugin.MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
+            };
+            if (memoryOverwriteConsumer != null) {
+                //  memoryOverwrite.setLabelRewrite(dftLableRewrite);
+                memoryOverwriteConsumer.accept(memoryOverwrite);
+            }
+            this.add(fieldName, TISAssistProp.create(option).setOverwriteProp(memoryOverwrite), CatalogCacheON.paimonMemorySizeProcess);
         }
 
         @Override

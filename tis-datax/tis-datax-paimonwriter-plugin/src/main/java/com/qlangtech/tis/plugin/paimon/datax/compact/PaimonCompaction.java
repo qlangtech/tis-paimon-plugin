@@ -6,9 +6,12 @@ import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
+import com.qlangtech.tis.extension.util.PropValFilter;
+import com.qlangtech.tis.plugin.MemorySize;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
+import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
@@ -35,11 +38,15 @@ import java.util.function.Function;
  * @see org.apache.paimon.CoreOptions#COMPACTION_MIN_FILE_NUM
  **/
 public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBuilderSetter {
+
+
+
+
     // WRITE_ONLY
-    @FormField(ordinal = 7, advance = true, type = FormFieldType.ENUM, validate = {Validator.require})
+    @FormField(ordinal = 70, advance = true, type = FormFieldType.ENUM, validate = {Validator.require})
     public Boolean writeOnly;
 
-    @FormField(ordinal = 2, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+    @FormField(ordinal = 20, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer minFileNum;
 
 
@@ -51,16 +58,16 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
      *
      * @see org.apache.paimon.CoreOptions#COMPACTION_MAX_SIZE_AMPLIFICATION_PERCENT
      */
-    @FormField(ordinal = 3, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+    @FormField(ordinal = 30, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer sizeAmplificationPercent;
 
-    @FormField(ordinal = 4, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
+    @FormField(ordinal = 40, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer sizeRatio;
     // optimization-interval
     /**
      * compaction 间隔时间，单位：秒
      */
-    @FormField(ordinal = 6, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.integer})
+    @FormField(ordinal = 60, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.integer})
     public Duration optimizationInterval;
 
     @Override
@@ -96,6 +103,14 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
             optimizationIntervalOverwrite.setAppendHelper("compaction.optimization-interval 的核心是平衡后台优化开销和数据查询/管理效率。1 分钟是安全的默认起点。 最佳值需要通过仔细监控你的特定工作负载在特定环境下的表现（资源使用、文件状态、查询延迟、写入稳定性）来确定。优先解决已观察到的瓶颈（资源争用或小文件堆积），然后进行有针对性的调整。记住，它需要与 compaction.max.file-num 和 compaction.early.max.file-num 等参数协同工作。");
             optimizationIntervalOverwrite.setDftVal(Duration.ofMinutes(2));
             opts.add("optimizationInterval", TISAssistProp.create(CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL).setOverwriteProp(optimizationIntervalOverwrite));
+
+//            OverwriteProps memoryOverwrite = new OverwriteProps();
+//            memoryOverwrite.dftValConvert = (val) -> {
+//                return MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
+//            };
+
+
+
         }
 
         @Override

@@ -6,6 +6,9 @@
   "changelog": {
     "dftVal": "off"
   },
+  "writeBuffer": {
+    "dftVal": "default"
+  },
   "writeMode": {
     "disable": true
   },

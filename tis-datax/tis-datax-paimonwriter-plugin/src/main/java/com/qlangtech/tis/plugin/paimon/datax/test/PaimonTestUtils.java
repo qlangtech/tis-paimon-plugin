@@ -3,6 +3,7 @@ package com.qlangtech.tis.plugin.paimon.datax.test;
 import com.alibaba.datax.plugin.writer.hdfswriter.HdfsColMeta;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.plugin.datax.common.AutoCreateTable;
 import com.qlangtech.tis.plugin.datax.common.impl.NoneCreateTable;
 import com.qlangtech.tis.plugin.ds.DataType;
 import com.qlangtech.tis.plugin.ds.JDBCTypes;
@@ -30,6 +31,10 @@ public class PaimonTestUtils {
     public static final String DATAX_PAIMON_NAME = "paimon_writer";
 
     public static DataxPaimonWriter getPaimonWriter() {
+      return getPaimonWriter(new NoneCreateTable());
+    }
+
+    public static DataxPaimonWriter getPaimonWriter(AutoCreateTable autoCreateTable) {
         //   DaMengDataSourceFactory dsFactory = TestDaMengDataSourceFactory.createDaMengDataSourceFactory();
 
         DataxPaimonWriter writer = new DataxPaimonWriter() {
@@ -62,7 +67,7 @@ public class PaimonTestUtils {
         snapshot.timeRetained = org.apache.paimon.CoreOptions.SNAPSHOT_TIME_RETAINED.defaultValue();
         writer.snapshot = snapshot;
 
-        writer.autoCreateTable = new NoneCreateTable();
+        writer.autoCreateTable = autoCreateTable;
         writer.changelog = new ChangelogProducerOff();
         //writer.autoCreateTable = AutoCreateTable.dft();
 
