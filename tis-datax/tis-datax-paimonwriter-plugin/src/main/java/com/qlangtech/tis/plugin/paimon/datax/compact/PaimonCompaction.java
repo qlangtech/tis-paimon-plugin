@@ -3,22 +3,17 @@ package com.qlangtech.tis.plugin.paimon.datax.compact;
 import com.qlangtech.tis.extension.Describable;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
-import com.qlangtech.tis.extension.util.AbstractPropAssist.Options;
 import com.qlangtech.tis.extension.util.AbstractPropAssist.TISAssistProp;
 import com.qlangtech.tis.extension.util.OverwriteProps;
-import com.qlangtech.tis.extension.util.PropValFilter;
-import com.qlangtech.tis.plugin.MemorySize;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
-import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
 import com.qlangtech.tis.plugin.paimon.datax.SchemaBuilderSetter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.paimon.CoreOptions;
-import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.schema.Schema;
 
 import java.time.Duration;
@@ -40,11 +35,8 @@ import java.util.function.Function;
 public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBuilderSetter {
 
 
-
-
     // WRITE_ONLY
-    @FormField(ordinal = 70, advance = true, type = FormFieldType.ENUM, validate = {Validator.require})
-    public Boolean writeOnly;
+
 
     @FormField(ordinal = 20, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
     public Integer minFileNum;
@@ -69,6 +61,24 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
      */
     @FormField(ordinal = 60, type = FormFieldType.DURATION_OF_MINUTE, validate = {Validator.integer})
     public Duration optimizationInterval;
+
+    /**
+     * @see org.apache.paimon.CoreOptions#NUM_SORTED_RUNS_COMPACTION_TRIGGER
+     */
+    @FormField(ordinal = 65, advance = true, type = FormFieldType.INT_NUMBER, validate = {Validator.integer})
+    public Integer numStoredRunsTrigger;
+
+    /**
+     * @see org.apache.paimon.CoreOptions#NUM_SORTED_RUNS_STOP_TRIGGER
+     */
+    @FormField(ordinal = 70, advance = true, type = FormFieldType.INT_NUMBER, validate = {Validator.integer})
+    public Integer numStoredRunsStopTrigger;
+
+    /**
+     * @see CoreOptions#WRITE_ONLY
+     */
+    @FormField(ordinal = 80, advance = true, type = FormFieldType.ENUM, validate = {Validator.require})
+    public Boolean writeOnly;
 
     @Override
     public void initializeSchemaBuilder(Schema.Builder schemaBuilder, PaimonSelectedTab tab) {
@@ -104,11 +114,25 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
             optimizationIntervalOverwrite.setDftVal(Duration.ofMinutes(2));
             opts.add("optimizationInterval", TISAssistProp.create(CoreOptions.COMPACTION_OPTIMIZATION_INTERVAL).setOverwriteProp(optimizationIntervalOverwrite));
 
+
+            OverwriteProps numStoredOverwrite = new OverwriteProps();
+            numStoredOverwrite.setLabelRewrite((label) -> {
+                if (CoreOptions.NUM_SORTED_RUNS_COMPACTION_TRIGGER.key().equals(label)) {
+                    return "num.trigger";
+                } else if (CoreOptions.NUM_SORTED_RUNS_STOP_TRIGGER.key().equals(label)) {
+                    return "num.stop.trigger";
+                } else {
+                    throw new IllegalStateException("illegal label:" + label);
+                }
+            });
+
+            opts.add("numStoredRunsTrigger", CoreOptions.NUM_SORTED_RUNS_COMPACTION_TRIGGER, numStoredOverwrite);
+            opts.add("numStoredRunsStopTrigger", CoreOptions.NUM_SORTED_RUNS_STOP_TRIGGER, numStoredOverwrite);
+
 //            OverwriteProps memoryOverwrite = new OverwriteProps();
 //            memoryOverwrite.dftValConvert = (val) -> {
 //                return MemorySize.ofBytes(((org.apache.paimon.options.MemorySize) val).getBytes());
 //            };
-
 
 
         }

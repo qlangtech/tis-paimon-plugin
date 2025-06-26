@@ -1,6 +1,7 @@
 package com.qlangtech.tis.plugin.paimon.datax.writemode;
 
 import com.qlangtech.tis.extension.Describable;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucket;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.table.Table;
 
@@ -14,12 +15,13 @@ import org.apache.paimon.table.Table;
  **/
 public abstract class WriteMode implements Describable<WriteMode> {
 
-    public abstract PaimonTableWriter createWriter(Integer taskId, Table table);
+    public abstract PaimonTableWriter createWriter(PaimonBucket tableBucket, Integer taskId, Table table);
 
     /**
+     *
      */
     public interface PaimonTableWriter {
-        public void writeRow(GenericRow row, int bucket) throws Exception;
+        public void writeRow(GenericRow row) throws Exception;
 
         /**
          * 在dataX执行完成哪部立即commit

@@ -3,14 +3,13 @@ package com.qlangtech.tis.plugin.paimon.datax.writemode;
 import com.beust.jcommander.internal.Lists;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucket;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.fs.FileIO;
 import org.apache.paimon.fs.FileStatus;
 import org.apache.paimon.fs.Path;
-import org.apache.paimon.fs.SeekableInputStream;
 import org.apache.paimon.io.DataInputViewStreamWrapper;
-import org.apache.paimon.io.DataOutputView;
 import org.apache.paimon.io.DataOutputViewStreamWrapper;
 import org.apache.paimon.table.DataTable;
 import org.apache.paimon.table.Table;
@@ -33,35 +32,32 @@ import java.util.UUID;
 public class BatchInsertWriteMode extends WriteMode {
 
     @Override
-    public PaimonTableWriter createWriter(Integer taskId, Table table) {
+    public PaimonTableWriter createWriter(PaimonBucket tableBucket, Integer taskId, Table table) {
         BatchWriteBuilder writeBuilder = table.newBatchWriteBuilder().withOverwrite();
+        // class org.apache.paimon.table.sink.TableWriteImpl
         BatchTableWrite write = writeBuilder.newWrite();
         // 只进行insert操作，最终不会执行compact操作
         write.withInsertOnly(true);
-        return new PaimonBatchTableWrite(taskId, table, write, writeBuilder);
+        return new PaimonBatchTableWrite(taskId, table, tableBucket, write, writeBuilder);
     }
 
-    static class PaimonBatchTableWrite implements PaimonTableWriter {
+    static class PaimonBatchTableWrite extends BasicPaimonTableWriter<BatchTableWrite> {
         private static final Logger logger = LoggerFactory.getLogger(PaimonBatchTableWrite.class);
-        private final BatchTableWrite write;
+        // private final BatchTableWrite write;
         private final BatchWriteBuilder writeBuilder;
         private final FileIO fileIO;
         private final Path tabLocation;
         private final Integer taskId;
         private final CommitMessageSerializer messageSerializer = new CommitMessageSerializer();
 
-        public PaimonBatchTableWrite(Integer taskId, Table table, BatchTableWrite write, BatchWriteBuilder writeBuilder) {
-            this.write = write;
+        public PaimonBatchTableWrite(Integer taskId, Table table, PaimonBucket tableBucket, BatchTableWrite write, BatchWriteBuilder writeBuilder) {
+            super(write, tableBucket, table);
             this.writeBuilder = Objects.requireNonNull(writeBuilder);
             this.fileIO = Objects.requireNonNull(table.fileIO(), "fileIO can not be null");
             this.tabLocation = ((DataTable) table).location();
             this.taskId = taskId;
         }
 
-        @Override
-        public void writeRow(GenericRow row, int bucket) throws Exception {
-            write.write(row, bucket);
-        }
 
         /**
          * 取得单次task下某表的全部commit message文件

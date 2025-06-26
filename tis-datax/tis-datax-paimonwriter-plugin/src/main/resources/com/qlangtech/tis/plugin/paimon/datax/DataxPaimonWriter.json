@@ -35,5 +35,8 @@
     "label": "自动建表",
     "subDescEnumFilter": "return com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter.supportedTableCreator(desc);",
     "dftVal": "on"
+  },
+  "tableBucket": {
+    "dftVal": "Dynamic"
   }
 }

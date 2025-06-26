@@ -85,7 +85,7 @@ public class PaimonWriter extends Writer {
         //  private  catalog;
         private Table table;
         private PaimonTableWriter paimonTableWriter;
-        private int bucket;
+        //private int bucket;
         private String hiveConfDir;
         private String hadoopConfDir;
         private String metastoreUri;
@@ -120,7 +120,7 @@ public class PaimonWriter extends Writer {
 
 //            catalogPath = sliceConfig.getNecessaryValue(PAIMON_CATALOG_PATH, PAIMON_PARAM_LOST);
 //            catalogType = sliceConfig.getNecessaryValue(PAIMON_CATALOG_TYPE, PAIMON_PARAM_LOST);
-            bucket = paimonWriter.tableBucket; //sliceConfig.getInt(PAIMON_TABLE_BUCKET, 2);
+            // bucket = paimonWriter.tableBucket.getBucketCount(); //sliceConfig.getInt(PAIMON_TABLE_BUCKET, 2);
             // batchSize = paimonWriter. sliceConfig.getInt(PAIMON_BATCH_SIZE, 10);
 
 
@@ -186,12 +186,12 @@ public class PaimonWriter extends Writer {
             long commitIdentifier = 0;
             PaimonColumn pcol = null;
             Column column = null;
-            int[] pksHash = new int[this.primaryKeys.size()];
+            // int[] pksHash = new int[this.primaryKeys.size()];
             int pkIdx = 0;
             Object paimonFieldVal = null;
             while ((record = recordReceiver.getFromReader()) != null) {
-                Arrays.fill(pksHash, 0);
-                pkIdx = 0;
+               // Arrays.fill(pksHash, 0);
+               // pkIdx = 0;
                 GenericRow row = new GenericRow(paimonCols.size());
                 for (int i = 0; i < paimonCols.size(); i++) {
                     pcol = paimonCols.get(i);
@@ -205,14 +205,14 @@ public class PaimonWriter extends Writer {
                     }
                     paimonFieldVal = pcol.getPaimonFieldVal(column);
                     row.setField(i, paimonFieldVal);
-                    if (pcol.isPrimaryKey()) {
-                        pksHash[pkIdx++] = paimonFieldVal.hashCode();
-                    }
+//                    if (pcol.isPrimaryKey()) {
+//                        pksHash[pkIdx++] = paimonFieldVal.hashCode();
+//                    }
                 }
 
 
                 try {
-                    this.paimonTableWriter.writeRow(row, this.bucket > 0 ? (Objects.hash(pksHash) % this.bucket) : 0);
+                    this.paimonTableWriter.writeRow(row);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

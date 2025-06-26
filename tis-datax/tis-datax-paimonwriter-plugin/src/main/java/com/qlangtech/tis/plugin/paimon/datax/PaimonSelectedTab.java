@@ -15,6 +15,7 @@ import com.qlangtech.tis.plugin.ds.ColumnMetaData;
 import com.qlangtech.tis.plugin.ds.DataType.TypeVisitor;
 import com.qlangtech.tis.plugin.ds.DataTypeMeta;
 import com.qlangtech.tis.plugin.ds.IColMetaGetter;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucketKeys;
 import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.paimon.data.BinaryString;
@@ -45,6 +46,9 @@ public class PaimonSelectedTab extends SelectedTab {
 
     @FormField(ordinal = 5, validate = {Validator.require})
     public PaimonSequenceFields sequenceField;
+
+    @FormField(ordinal = 6, advance = true, validate = {Validator.require})
+    public PaimonBucketKeys bucketField;
 
     public final List<String> getPartitionKeys() {
         return this.partition.getPartitionKeys();

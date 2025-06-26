@@ -5,6 +5,7 @@ import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.plugin.annotation.FormField;
 import com.qlangtech.tis.plugin.annotation.FormFieldType;
 import com.qlangtech.tis.plugin.annotation.Validator;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucket;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.table.sink.CommitMessage;
@@ -25,28 +26,29 @@ public class StreamInsertWriteMode extends WriteMode {
     public Integer batchSize;
 
     @Override
-    public PaimonTableWriter createWriter(Integer taskId,Table table) {
+    public PaimonTableWriter createWriter(PaimonBucket tableBucket, Integer taskId, Table table) {
         StreamWriteBuilder writeBuilder = table.newStreamWriteBuilder();
         StreamTableWrite write = writeBuilder.newWrite();
-        return new PaimonStreamTableWrite(write, writeBuilder, this.batchSize);
+        return new PaimonStreamTableWrite(write, tableBucket, table, writeBuilder, this.batchSize);
     }
 
-    private static class PaimonStreamTableWrite implements PaimonTableWriter {
-        private final StreamTableWrite write;
+    private static class PaimonStreamTableWrite extends BasicPaimonTableWriter<StreamTableWrite> {
+        // private final StreamTableWrite write;
         private final Integer batchSize;
         private AtomicLong counter = new AtomicLong(0);
         private AtomicLong commitIdentifier = new AtomicLong(0);
         private final StreamWriteBuilder writeBuilder;
 
-        public PaimonStreamTableWrite(StreamTableWrite write, StreamWriteBuilder writeBuilder, Integer batchSize) {
-            this.write = write;
+        public PaimonStreamTableWrite(StreamTableWrite write, PaimonBucket tableBucket
+                , Table table, StreamWriteBuilder writeBuilder, Integer batchSize) {
+            super(write, tableBucket, table);
             this.batchSize = batchSize;
             this.writeBuilder = writeBuilder;
         }
 
         @Override
-        public void writeRow(GenericRow row, int bucket) throws Exception {
-            write.write(row, bucket);
+        public void writeRow(GenericRow row) throws Exception {
+            super.writeRow(row);
 
             long num = counter.incrementAndGet();
             if (num >= batchSize) {

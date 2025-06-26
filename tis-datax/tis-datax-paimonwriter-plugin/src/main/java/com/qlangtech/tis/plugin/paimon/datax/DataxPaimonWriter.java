@@ -38,6 +38,7 @@ import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucket;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.hook.PostExecutor;
 import com.qlangtech.tis.plugin.paimon.datax.hook.PreExecutor;
@@ -191,8 +192,8 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
      * Bucket number for file store.
      * It should either be equal to -1 (dynamic bucket mode), -2 (postpone bucket mode), or it must be greater than 0 (fixed bucket mode).
      */
-    @FormField(ordinal = 7, type = FormFieldType.INT_NUMBER, validate = {Validator.require})
-    public Integer tableBucket;
+    @FormField(ordinal = 7, validate = {Validator.require})
+    public PaimonBucket tableBucket;
 
 
     @FormField(ordinal = 11, validate = {Validator.require})
@@ -263,9 +264,11 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         this.catalog.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.compaction.initializeSchemaBuilder(tabSchemaBuilder, tab);
         this.snapshot.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        this.tableBucket.initializeSchemaBuilder(tabSchemaBuilder, tab);
 
         tab.partition.initializeSchemaBuilder(tabSchemaBuilder, tab);
         tab.sequenceField.initializeSchemaBuilder(tabSchemaBuilder, tab);
+        tab.bucketField.initializeSchemaBuilder(tabSchemaBuilder, tab);
     }
 
 
@@ -324,7 +327,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
     }
 
     public PaimonTableWriter createWriter(Integer taskId, Table table) {
-        return Objects.requireNonNull(this.paimonWriteMode).createWriter(taskId, table);
+        return Objects.requireNonNull(this.paimonWriteMode).createWriter(Objects.requireNonNull(this.tableBucket), taskId, table);
     }
 
     public Function<PaimonSelectedTab, Map<String, String>> createTabOpts() {
@@ -436,7 +439,7 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         public DefaultDescriptor() {
             super();
             opts = PaimonPropAssist.createOpts(this);
-            opts.add("tableBucket", CoreOptions.BUCKET);
+            //opts.add("tableBucket", CoreOptions.BUCKET);
             OverwriteProps fileFormatOverwriteProps = new OverwriteProps();
             fileFormatOverwriteProps.setEnumOpts(
                     Lists.newArrayList(new Option(FILE_FORMAT_ORC), new Option(FILE_FORMAT_AVRO), new Option(FILE_FORMAT_PARQUET)));

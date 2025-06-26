@@ -27,13 +27,13 @@ public class PaimonWriteBufferCustomize extends PaimonWriteBuffer {
     @FormField(ordinal = 0, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {Validator.require})
     public MemorySize writeBufferSize;
 
-    @FormField(ordinal = 2, type = FormFieldType.ENUM, validate = {})
+    @FormField(ordinal = 2, advance = true, type = FormFieldType.ENUM, validate = {})
     public Boolean writeBufferSpillable;
 
-    @FormField(ordinal = 3, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {})
+    @FormField(ordinal = 3, advance = true, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {})
     public MemorySize writeBufferMaxDiskSize;
 
-    @FormField(ordinal = 4, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {})
+    @FormField(ordinal = 4, advance = true, type = FormFieldType.MEMORY_SIZE_OF_MEGA, validate = {})
     public MemorySize targetFileSize;
 
     @Override
@@ -64,7 +64,8 @@ public class PaimonWriteBufferCustomize extends PaimonWriteBuffer {
             opts.addMemorySize("writeBufferSize", CoreOptions.WRITE_BUFFER_SIZE, memoryOverwriteConsumer);
             opts.addMemorySize("targetFileSize", CoreOptions.TARGET_FILE_SIZE, memoryOverwriteConsumer);
 
-            opts.add("writeBufferSpillable", TISAssistProp.create(CoreOptions.WRITE_BUFFER_SPILLABLE).overwriteLabel(labelOverwrite));
+            opts.add("writeBufferSpillable"
+                    , TISAssistProp.create(CoreOptions.WRITE_BUFFER_SPILLABLE).overwriteLabel(labelOverwrite));
             opts.addMemorySize("writeBufferMaxDiskSize"
                     , CoreOptions.WRITE_BUFFER_MAX_DISK_SIZE
                     , memoryOverwriteConsumer.andThen((o) -> {

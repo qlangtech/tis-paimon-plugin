@@ -3,6 +3,7 @@ package com.qlangtech.tis.plugin.paimon.datax.test;
 import com.alibaba.datax.plugin.writer.hdfswriter.HdfsColMeta;
 import com.google.common.collect.Lists;
 import com.qlangtech.tis.datax.IDataxProcessor.TableMap;
+import com.qlangtech.tis.plugin.MemorySize;
 import com.qlangtech.tis.plugin.datax.common.AutoCreateTable;
 import com.qlangtech.tis.plugin.datax.common.impl.NoneCreateTable;
 import com.qlangtech.tis.plugin.ds.DataType;
@@ -13,11 +14,15 @@ import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import com.qlangtech.tis.plugin.paimon.catalog.lock.CatalogLockOFF;
 import com.qlangtech.tis.plugin.paimon.datax.DataxPaimonWriter;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.impl.DynamicPaimonBucket;
+import com.qlangtech.tis.plugin.paimon.datax.bucket.impl.PaimonBucketKeysOFF;
 import com.qlangtech.tis.plugin.paimon.datax.changelog.ChangelogProducerOff;
 import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction;
 import com.qlangtech.tis.plugin.paimon.datax.pt.OnPaimonPartition;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
+import com.qlangtech.tis.plugin.paimon.datax.writebuffer.PaimonWriteBufferCustomize;
 import com.qlangtech.tis.plugin.paimon.datax.writemode.BatchInsertWriteMode;
+import com.qlangtech.tis.plugin.paimon.datax.writemode.StreamInsertWriteMode;
 import org.apache.paimon.CoreOptions;
 
 import static org.apache.paimon.CoreOptions.FILE_FORMAT_PARQUET;
@@ -31,7 +36,7 @@ public class PaimonTestUtils {
     public static final String DATAX_PAIMON_NAME = "paimon_writer";
 
     public static DataxPaimonWriter getPaimonWriter() {
-      return getPaimonWriter(new NoneCreateTable());
+        return getPaimonWriter(new NoneCreateTable());
     }
 
     public static DataxPaimonWriter getPaimonWriter(AutoCreateTable autoCreateTable) {
@@ -47,10 +52,15 @@ public class PaimonTestUtils {
         writer.template = DataxPaimonWriter.getDftTemplate();
         HiveCatalog hiveCatalog = createHiveCatalog();
         writer.catalog = hiveCatalog;
-        BatchInsertWriteMode writeMode = new BatchInsertWriteMode();
+      //  BatchInsertWriteMode writeMode = new BatchInsertWriteMode();
+
+        StreamInsertWriteMode writeMode = new StreamInsertWriteMode();
+        writeMode.batchSize = 100;
         // writer.fsName = KEY_HDFS200;
         writer.paimonWriteMode = writeMode;
-        writer.tableBucket = -1;
+        DynamicPaimonBucket dynamicBucket = new DynamicPaimonBucket();
+        dynamicBucket.targetRowNum = org.apache.paimon.CoreOptions.DYNAMIC_BUCKET_TARGET_ROW_NUM.defaultValue().intValue();
+        writer.tableBucket = dynamicBucket;
         writer.storeFormat = FILE_FORMAT_PARQUET;
 
         PaimonCompaction compaction = new PaimonCompaction();
@@ -69,6 +79,9 @@ public class PaimonTestUtils {
 
         writer.autoCreateTable = autoCreateTable;
         writer.changelog = new ChangelogProducerOff();
+        PaimonWriteBufferCustomize writeBuffer = new PaimonWriteBufferCustomize();
+        writeBuffer.writeBufferSize = MemorySize.ofBytes(CoreOptions.WRITE_BUFFER_SIZE.defaultValue().getBytes());
+        writer.writeBuffer = writeBuffer;
         //writer.autoCreateTable = AutoCreateTable.dft();
 
         return writer;
@@ -92,6 +105,7 @@ public class PaimonTestUtils {
         PaimonSelectedTab tab = new PaimonSelectedTab();
         String keyCreateTime = "create_time";
 
+        tab.bucketField = new PaimonBucketKeysOFF();
         tab.sequenceField = new com.qlangtech.tis.plugin.paimon.datax.sequence.PaimonSequenceFieldsOff();
 
         OnPaimonPartition pt = new OnPaimonPartition();
@@ -130,6 +144,7 @@ public class PaimonTestUtils {
         cmeta = new HdfsColMeta("last_ver"
                 , true, false, DataType.getType(JDBCTypes.BIGINT));
         tab.cols.add(TableMap.getCMeta(cmeta));
+
         return tab;
     }
 }
