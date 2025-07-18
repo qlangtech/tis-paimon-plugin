@@ -3,7 +3,7 @@ package com.qlangtech.tis.plugins.incr.flink.connector;
 
 import com.google.common.collect.Maps;
 import com.qlangtech.plugins.incr.flink.cdc.FlinkCol;
-import com.qlangtech.plugins.incr.flink.cdc.FlinkCol.DTOConvertTo;
+import com.qlangtech.tis.plugins.incr.flink.cdc.DTOConvertTo;
 import com.qlangtech.tis.plugin.datax.transformer.UDFDefinition;
 import com.qlangtech.tis.plugins.incr.flink.cdc.BasicFlinkDataMapper;
 import com.qlangtech.tis.realtime.FilterUpdateBeforeEvent.DTOFilter;
@@ -143,7 +143,7 @@ public class DTO2FlinkPipelineEventMapper extends BasicFlinkDataMapper<DataChang
             flinkCol = sourceColsMeta.get(idx);
             val = vals.get(flinkCol.name);
             if (val != null) {
-                rowFields[idx] = flinkCol.processVal(this.dtoConvert2Type, val);
+                rowFields[idx] = this.dtoConvert2Type.processVal(flinkCol, val);// flinkCol.processVal(this.dtoConvert2Type, val);
             }
         }
 

@@ -45,13 +45,13 @@ public abstract class PaimonCatalog implements Describable<PaimonCatalog>, IRepo
     public String fsName;
 
 
-    @FormField(ordinal = 2, advance = true, validate = {Validator.require})
+    @FormField(ordinal = 5, advance = true, validate = {Validator.require})
     public CatalogLock catalogLock;
 
-    @FormField(ordinal = 3, advance = true, validate = {Validator.require})
+    @FormField(ordinal = 6, advance = true, validate = {Validator.require})
     public CatalogCache catalogCache;
 
-    @FormField(ordinal = 1, type = FormFieldType.INPUTTEXT, validate = {Validator.require, Validator.db_col_name})
+    @FormField(ordinal = 2, type = FormFieldType.INPUTTEXT, validate = {Validator.require, Validator.db_col_name})
     public String tableOwner;
 
 

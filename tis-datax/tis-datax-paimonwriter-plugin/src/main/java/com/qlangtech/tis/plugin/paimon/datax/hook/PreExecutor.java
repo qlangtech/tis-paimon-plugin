@@ -60,21 +60,6 @@ public class PreExecutor implements IRemoteTaskPreviousTrigger {
                         paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
                 this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab, sourceColMetaGetter);
             });
-//            try (Catalog catalog = paimonWriter.createCatalog()) {
-//                // 判断表是否存在
-//                if (!Task.tableExists(catalog, this.entity.getDbName(), this.entity.getTabName()).getKey()) {
-//                    // 创建新表
-//                    Optional<RecordTransformerRules> transformerRules = getRecordTransformerRules();
-//                    List<PaimonColumn> paimonCols = tab.getPaimonCols(transformerRules);
-//                    final IDataxReader reader = execContext.getProcessor().getReader(null);
-//                    SourceColMetaGetter sourceColMetaGetter =
-//                            paimonWriter.autoCreateTable.enabledColumnComment() ? reader.createSourceColMetaGetter() : SourceColMetaGetter.getNone();
-//                    this.createTable(catalog, this.entity.getDbName(), this.entity.getTabName(), paimonCols, tab, sourceColMetaGetter);
-//                }
-//
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
         });
 
 

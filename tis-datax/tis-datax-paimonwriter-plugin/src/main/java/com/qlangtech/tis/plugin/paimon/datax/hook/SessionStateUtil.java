@@ -4,6 +4,8 @@ import com.qlangtech.tis.plugin.paimon.catalog.FileSystemCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.HiveCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalog;
 import com.qlangtech.tis.plugin.paimon.catalog.PaimonCatalogVisitor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
@@ -82,9 +84,17 @@ public class SessionStateUtil {
 
             @Override
             public HiveConf visit(HiveCatalog catalog) {
-                return catalog.getHiveConnGetter().createMetaStoreClient().getHiveCfg();
+
+                HiveConf conf = new HiveConf((HiveConf) catalog.getHiveConnGetter().createMetaStoreClient().getHiveCfg());
+                String fsRootPath = catalog.getConfiguration().get(FileSystem.FS_DEFAULT_NAME_KEY);
+                if (StringUtils.isEmpty(fsRootPath)) {
+                    throw new IllegalStateException("property " + FileSystem.FS_DEFAULT_NAME_KEY + " can not be empty");
+                }
+                conf.set(FileSystem.FS_DEFAULT_NAME_KEY, fsRootPath);
+                return conf;
             }
         });
+
         SessionState oldHiveSessionState = SessionState.get();
         SessionState sessionState = SessionState.start(conf);
         conf.setClassLoader(SessionStateUtil.class.getClassLoader());
