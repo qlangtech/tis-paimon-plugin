@@ -1,11 +1,11 @@
 package com.qlangtech.tis.plugin.paimon.datax.writemode;
 
-import com.beust.jcommander.internal.Lists;
+
+import com.google.common.collect.Lists;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.TISExtension;
 import com.qlangtech.tis.plugin.paimon.datax.bucket.PaimonBucket;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.fs.FileIO;
 import org.apache.paimon.fs.FileStatus;
 import org.apache.paimon.fs.Path;
