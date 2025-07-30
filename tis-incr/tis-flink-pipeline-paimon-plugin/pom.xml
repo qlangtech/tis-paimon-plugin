@@ -77,4 +77,10 @@
 
     </dependencies>
 
+    <build>
+        <resources>
+
+        </resources>
+    </build>
+
 </project>

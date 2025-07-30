@@ -22,6 +22,10 @@ public class EventRowFields extends AbstractTransformerRecord<Object[]> {
     @Override
     public Object getColumn(String field) {
         Col col = this.col2IndexMapper.getCol2Index().get(field);
+        if (col == null) {
+            throw new NullPointerException("field:" + field + " relevant col can not be null, exist cols key:"
+                    + String.join(",", this.col2IndexMapper.getCol2Index().keySet()));
+        }
         return this.row[col.getIndex()];
     }
 

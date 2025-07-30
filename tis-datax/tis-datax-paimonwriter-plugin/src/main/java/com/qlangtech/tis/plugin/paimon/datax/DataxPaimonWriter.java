@@ -295,7 +295,8 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
 
 
     public List<PaimonColumn> createPaimonCols(PaimonSelectedTab tab, Optional<RecordTransformerRules> transformerRules) {
-        return ((PaimonFSDataXContext) getSubTask(Optional.of(new TableMap(tab)), transformerRules)).getPaimonCols();
+        TableMap tabMapper = new TableMap(tab);
+        return ((PaimonFSDataXContext) getSubTask(Optional.of(tabMapper), transformerRules)).getPaimonCols();
     }
 
     public Catalog createCatalog() {
@@ -374,11 +375,13 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
         }
 
         public final String getTableName() {
-            String tabName = this.tabMap.getTo();
-            if (StringUtils.isBlank(tabName)) {
-                throw new IllegalStateException("tabName of tabMap can not be null ,tabMap:" + tabMap);
-            }
-            return tabName;
+            EntityName to = parseEntity(this.tabMap.getFrom());
+            return to.getTableName();
+//            String tabName = this.tabMap.getTo();
+//            if (StringUtils.isBlank(tabName)) {
+//                throw new IllegalStateException("tabName of tabMap can not be null ,tabMap:" + tabMap);
+//            }
+//            return tabName;
         }
 
         /**

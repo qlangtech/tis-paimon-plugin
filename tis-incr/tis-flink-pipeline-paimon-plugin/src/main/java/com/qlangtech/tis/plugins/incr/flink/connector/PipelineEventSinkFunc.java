@@ -112,7 +112,8 @@ public class PipelineEventSinkFunc extends TabSinkFunc<Sink<Event>, Void, Event>
 
             sourceColsMetaMapperBuilder.put(targetEntityName.getTableName()
                     , Pair.of(FlinkCol.createCols(null
-                                    , selTab, sourceFlinkColCreator, transformerOpt, (rules) -> rules.transformerColsWithoutContextParamsFlinkCol())
+                                    , selTab, sourceFlinkColCreator, transformerOpt, (rules) -> rules.overwriteColsWithContextParams() //(rules) -> rules.transformerColsWithoutContextParamsFlinkCol()
+                            )
                             , transformerOpt.map((t) -> t.getTransformerRules().getTransformerUDFs()).orElse(null)));
         }
         this.tab2TableID = tab2TableIDBuilder.build();

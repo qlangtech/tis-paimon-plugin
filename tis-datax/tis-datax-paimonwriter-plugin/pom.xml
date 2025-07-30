@@ -194,6 +194,7 @@
     </dependencies>
 
     <build>
+
         <plugins>
             <!-- compiler plugin -->
             <!--            <plugin>-->
