@@ -71,12 +71,18 @@ public class DynamicPaimonBucket extends PaimonBucket {
     }
 
     /**
-     *  只能用在批量同步的场景
+     * 只能用在批量同步的场景
      */
-    private final Map<String, Pair<BucketAssigner, RowPartitionKeyExtractor>> tableBucketAssignerMapper = new HashMap<>();
+    private transient static final ThreadLocal<Map<String, Pair<BucketAssigner, RowPartitionKeyExtractor>>> tableBucketAssignerMapperThreadLocal = new ThreadLocal<>() {
+        @Override
+        protected Map<String, Pair<BucketAssigner, RowPartitionKeyExtractor>> initialValue() {
+            return new HashMap<>();
+        }
+    };
 
     /**
      * 参考：org.apache.flink.cdc.connectors.paimon.sink.v2.bucket.BucketAssignOperator#processElement() 方法中的实现
+     *
      * @param table
      * @param write
      * @param row
@@ -84,7 +90,7 @@ public class DynamicPaimonBucket extends PaimonBucket {
      */
     @Override
     public int getBucket(DataTable table, TableWrite write, GenericRow row) {
-
+        Map<String, Pair<BucketAssigner, RowPartitionKeyExtractor>> tableBucketAssignerMapper = tableBucketAssignerMapperThreadLocal.get();
         Pair<BucketAssigner, RowPartitionKeyExtractor> pair = tableBucketAssignerMapper.get(table.fullName());
         if (pair == null) {
             pair = this.getTableInfo(table);
