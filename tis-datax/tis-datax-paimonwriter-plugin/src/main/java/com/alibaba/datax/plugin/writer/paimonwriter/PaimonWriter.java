@@ -158,7 +158,6 @@ public class PaimonWriter extends Writer {
                     this.kerberosAuthentication(kerberosPrincipal, kerberosKeytabFilePath, hadoopConf);
                 }
 
-
                 try (Catalog catalog = paimonWriter.createCatalog()) {
                     Pair<Boolean, Table> tabExist = PaimonUtils.tableExists(catalog, dbName, tableName);
                     if (!tabExist.getKey()) {

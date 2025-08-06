@@ -107,6 +107,29 @@ public class HiveCatalog extends PaimonCatalog {
         options.set(CatalogOptions.METASTORE, HIVE_CATALOG_IDENTIFIER);
         //默认设置为外部表
         options.set(CatalogOptions.TABLE_TYPE, CatalogTableType.EXTERNAL);
+        /**
+         * 创建Catalog时，会创建一个线程池，线程池大小默认为1，如果数据量过大，可能会导致数据同步失败<br/>
+         * 避免在ClientPool.ClientPoolImpl-> DataxPaimonWriter.-> getHiveConnGetter().createMetaStoreClient().unwrapClient() 中创建多个相同的实例，导致以下异常，虽然是warn级别
+         * <pre>
+         *   08-01 10:35 192.168.28.201 WARN  o.a.h.h.m.RetryingMetaStoreClient-MetaStoreClient lost connection. Attempting to reconnect.org.apache.thrift.transport.TTransportException: Cannot write to null outputStream
+         * 	at org.apache.thrift.transport.TIOStreamTransport.write(TIOStreamTransport.java:142)
+         * 	at org.apache.thrift.protocol.TBinaryProtocol.writeI32(TBinaryProtocol.java:178)
+         * 	at org.apache.thrift.protocol.TBinaryProtocol.writeMessageBegin(TBinaryProtocol.java:106)
+         * 	at org.apache.thrift.TServiceClient.sendBase(TServiceClient.java:70)
+         * 	at org.apache.thrift.TServiceClient.sendBase(TServiceClient.java:62)
+         * 	at org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore$Client.send_get_table(ThriftHiveMetastore.java:1468)
+         * 	at org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore$Client.get_table(ThriftHiveMetastore.java:1459)
+         * 	at org.apache.hadoop.hive.metastore.HiveMetaStoreClient.getTable(HiveMetaStoreClient.java:1579)
+         * 	at org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient.getTable(SessionHiveMetaStoreClient.java:127)
+         * 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+         * 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+         * 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+         * 	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+         * 	at org.apache.hadoop.hive.metastore.RetryingMetaStoreClient.invoke(RetryingMetaStoreClient.java:154)
+         * </pre>
+         */
+        options.set(CatalogOptions.CLIENT_POOL_SIZE, 1);
+
 
         /**
          * 1.如果metastore uri 存在，则不需要设置 hiveConfDir
