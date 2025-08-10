@@ -416,6 +416,9 @@ public class DataxPaimonWriter extends DataxWriter implements SchemaBuilderSette
 
     @Override
     public IRemoteTaskPreviousTrigger createPreExecuteTask(IExecChainContext execContext, EntityName entity, ISelectedTab tab) {
+        if (StringUtils.isEmpty(entity.getDbName())) {
+            throw new IllegalArgumentException("entry:" + entity.getFullName() + " lack dbName. ");
+        }
         return new PreExecutor(execContext, this, entity, (PaimonSelectedTab) tab);
     }
 
