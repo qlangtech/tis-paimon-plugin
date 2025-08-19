@@ -1,9 +1,12 @@
 package com.qlangtech.tis.plugin.paimon.datax.compact;
 
 import com.google.common.collect.Maps;
+import com.qlangtech.tis.extension.IPropertyType;
+import com.qlangtech.tis.extension.impl.PropertyType;
 import com.qlangtech.tis.plugin.common.PluginDesc;
 import com.qlangtech.tis.plugin.paimon.MapUtils;
 import com.qlangtech.tis.plugin.paimon.datax.PaimonSelectedTab;
+import com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction.DefaultDescriptor;
 import com.qlangtech.tis.plugin.paimon.datax.test.PaimonTestUtils;
 import com.qlangtech.tis.plugin.paimon.datax.utils.PaimonSnapshot;
 import org.apache.paimon.CoreOptions;
@@ -16,6 +19,8 @@ import org.junit.Test;
 import java.time.Duration;
 import java.util.Map;
 
+import static com.qlangtech.tis.plugin.paimon.datax.compact.PaimonCompaction.FIELD_NUM_STORED_RUNS_TRIGGER;
+
 /**
  * @author: 百岁（baisui@qlangtech.com）
  * @create: 2025-05-18 18:24
@@ -25,6 +30,18 @@ public class TestPaimonCompaction {
     @Test
     public void testDescGenerate() throws Exception {
         PluginDesc.testDescGenerate(PaimonCompaction.class, "paimon-compaction-descriptor.json");
+    }
+
+    @Test
+    public void testNummStoredRunsTrigger() {
+        DefaultDescriptor cpmpactDescriptor = new DefaultDescriptor();
+        IPropertyType propertyType = cpmpactDescriptor.getPropertyType(FIELD_NUM_STORED_RUNS_TRIGGER);
+        Assert.assertNotNull(FIELD_NUM_STORED_RUNS_TRIGGER, propertyType);
+        Assert.assertTrue(propertyType instanceof PropertyType);
+        PropertyType pt = (PropertyType) propertyType;
+        Assert.assertTrue(pt.extraProp.isAsynHelp());
+
+        Assert.assertEquals("The number of stored runs trigger", pt.extraProp.getAsynHelp());
     }
 
     @Test

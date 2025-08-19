@@ -38,5 +38,6 @@ public class TestFlinkCDCPropAssist {
 
         String dftVal = (String) extraProps.get(PluginExtraProps.KEY_DFTVAL_PROP);
         Assert.assertEquals(IGNORE.name(), dftVal);
+
     }
 }

@@ -74,14 +74,7 @@ public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
         IDataxReader reader = dataxProcessor.getReader(null);
         List<ISelectedTab> tabs = reader.getSelectedTabs();
         Map<TableAlias, TabSinkFunc<?, ?, Event>> sinkFuncs = Maps.newHashMap();
-        //  List<ISelectedTab> tabs = reader.getSelectedTabs();
 
-        //        IDataxProcessor dataxProcessor
-//            , PaimonPipelineSinkFactory pipelineSinkFactory //
-//            , List<ISelectedTab> tabs //
-//            , IFlinkColCreator<FlinkCol> sourceFlinkColCreator
-//            , Sink<Event> sinkFunction //
-//            , int sinkTaskParallelism
         IncrStreamFactory streamFactory = IncrStreamFactory.getFactory(dataxProcessor.identityValue());
         MQListenerFactory sourceListenerFactory = HeteroEnum.getIncrSourceListenerFactory(dataxProcessor.getDataXName());
         IFlinkColCreator<FlinkCol> sourceFlinkColCreator
@@ -107,9 +100,7 @@ public class PaimonPipelineSinkFactory extends PipelineFlinkCDCSinkFactory {
             this.opts = FlinkCDCPropAssist.createOpts(this);
             OverwriteProps schemaBehaviorOverwrite = new OverwriteProps();
             schemaBehaviorOverwrite.setDftVal(SchemaChangeBehavior.IGNORE.name());
-//            schemaBehaviorOverwrite.setLabelRewrite((l) -> {
-//                return "表结构变化";
-//            });
+
             this.opts.add(KEY_SCHEMA_BEHAVIOR, PipelineOptions.PIPELINE_SCHEMA_CHANGE_BEHAVIOR, schemaBehaviorOverwrite);
         }
 

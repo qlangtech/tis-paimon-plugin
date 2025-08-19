@@ -1,8 +1,8 @@
-##numStoredRunsTrigger
+## numStoredRunsTrigger
 
 `num-sorted-run.compaction-trigger = N` 意味着：**当 Paimon 表（LSM 结构）的磁盘文件片段（Sorted Run）积累到 `N` 个时，系统会自动启动后台合并（Compaction）任务，将这些文件合并成更少、更大的文件，以优化后续的查询性能和空间利用率。** 这个参数是平衡写入吞吐量和查询性能的关键杠杆之一。
 
-##numStoredRunsStopTrigger
+## numStoredRunsStopTrigger
 
 以下是 `num-sorted-run.stop-trigger` 的详细解释：
 

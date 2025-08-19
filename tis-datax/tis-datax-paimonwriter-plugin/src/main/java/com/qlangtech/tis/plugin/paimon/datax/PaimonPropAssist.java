@@ -8,7 +8,6 @@ import com.qlangtech.tis.extension.util.PropValFilter;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.plugin.paimon.catalog.cache.CatalogCacheON;
 import org.apache.commons.lang3.EnumUtils;
-import org.apache.paimon.CoreOptions;
 import org.apache.paimon.options.ConfigOption;
 import org.apache.paimon.options.MemorySize;
 import org.apache.paimon.options.description.DescribedEnum;
@@ -16,12 +15,10 @@ import org.apache.paimon.options.description.Description;
 import org.apache.paimon.options.description.HtmlFormatter;
 import org.apache.paimon.utils.TimeUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -41,10 +38,10 @@ public class PaimonPropAssist<T extends Describable> extends AbstractPropAssist<
     }
 
     @Override
-    protected String getDescription(ConfigOption configOption) {
+    protected MarkdownHelperContent getDescription(ConfigOption configOption) {
         Description desc = configOption.description();
         HtmlFormatter formatter = new HtmlFormatter();
-        return formatter.format(desc);
+        return new MarkdownHelperContent(formatter.format(desc));
     }
 
     @Override

@@ -28,9 +28,6 @@ public abstract class PipelineFlinkCDCSinkFactory
         extends BasicTISSinkFactory<Event> implements IDataXNameAware, IStreamIncrGenerateStrategy {
 
     public static final String DISPLAY_NAME_FLINK_PIPELINE_SINK = "FlinkCDC-Pipeline-Sink-";
-//    @FormField(ordinal = 12, type = FormFieldType.INT_NUMBER, validate = {Validator.require, Validator.integer})
-//    public Integer parallelism;
-
     @Override
     public Map<TableAlias, TabSinkFunc<?, ?, Event>> createSinkFunction(IDataxProcessor dataxProcessor, IFlinkColCreator flinkColCreator) {
         throw new UnsupportedOperationException();

@@ -5,11 +5,11 @@
   <parent>
     <groupId>com.qlangtech.tis.plugins</groupId>
     <artifactId>tis-paimon-datax</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.3.0</version>
   </parent>
   <groupId>com.qlangtech.tis.plugins</groupId>
   <artifactId>tis-datax-paimonwriter-plugin</artifactId>
-  <version>4.3.0-SNAPSHOT</version>
+  <version>4.3.0</version>
   <packaging>tpi</packaging>
   <name>tis-datax-paimonwriter-plugin</name>
   <licenses>

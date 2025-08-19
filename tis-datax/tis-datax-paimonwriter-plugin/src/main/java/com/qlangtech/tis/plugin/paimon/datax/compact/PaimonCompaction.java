@@ -34,7 +34,7 @@ import java.util.function.Function;
  **/
 public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBuilderSetter {
 
-
+    public static final String FIELD_NUM_STORED_RUNS_TRIGGER = "numStoredRunsTrigger";
     // WRITE_ONLY
 
 
@@ -126,7 +126,7 @@ public class PaimonCompaction implements Describable<PaimonCompaction>, SchemaBu
                 }
             });
 
-            opts.add("numStoredRunsTrigger", CoreOptions.NUM_SORTED_RUNS_COMPACTION_TRIGGER, numStoredOverwrite);
+            opts.add(FIELD_NUM_STORED_RUNS_TRIGGER, CoreOptions.NUM_SORTED_RUNS_COMPACTION_TRIGGER, numStoredOverwrite);
             opts.add("numStoredRunsStopTrigger", CoreOptions.NUM_SORTED_RUNS_STOP_TRIGGER, numStoredOverwrite);
 
 //            OverwriteProps memoryOverwrite = new OverwriteProps();

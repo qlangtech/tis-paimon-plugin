@@ -4,9 +4,6 @@ import com.qlangtech.tis.extension.Describable;
 import com.qlangtech.tis.extension.Descriptor;
 import com.qlangtech.tis.extension.util.AbstractPropAssist;
 import com.qlangtech.tis.manage.common.Option;
-import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist;
-import com.qlangtech.tis.plugin.paimon.datax.PaimonPropAssist.PaimonOptions;
-
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.flink.cdc.common.configuration.ConfigOption;
 import org.apache.flink.cdc.common.configuration.description.HtmlFormatter;
@@ -49,8 +46,8 @@ public class FlinkCDCPropAssist<T extends Describable>
     }
 
     @Override
-    protected String getDescription(ConfigOption configOption) {
-        return formatter.format(configOption.description());
+    protected MarkdownHelperContent getDescription(ConfigOption configOption) {
+        return new MarkdownHelperContent(formatter.format(configOption.description()));
     }
 
     @Override
